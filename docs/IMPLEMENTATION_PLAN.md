@@ -313,8 +313,8 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 - [x] T3.1 마이그레이션: comments
 - [x] T3.2 댓글 UI
 - [x] T3.3 댓글 Realtime
-- [ ] T4.1 에디터 + Draft 자동저장
-- [ ] T4.2 이미지 업로드
+- [x] T4.1 에디터 + Draft 자동저장
+- [x] T4.2 이미지 업로드
 - [ ] T4.3 OG 파서 서비스
 - [ ] T4.4 URL 감지 → OG 카드
 - [ ] T5.1 UX 마감
