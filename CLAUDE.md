@@ -10,7 +10,7 @@
 * **Do not** bypass Row Level Security (RLS).
 * **Do not** expose service_role_key to client.
 * **Do not** add dependencies without justification.
-* **Do not** implement Phase 2/3 features during MVP (Phase 1).
+* **Do not** implement PRD 로드맵 Phase 2/3 features (타임어택 리그, AI 아카이빙) during MVP. (아래 §4의 개발 Step과 혼동하지 말 것 — "Phase"는 PRD의 제품 로드맵을 가리킨다.)
 
 ## 3. Workflow
 1. **Understand:** 관련 문서를 읽고 현재 구조 분석
@@ -19,14 +19,15 @@
 4. **Test:** TypeScript, Lint, Build 통과 확인
 5. **Review & Commit:** 정상 동작 시 커밋
 
-## 4. Development Phases
-* **Phase 0:** Project Foundation (Next.js, Tailwind, Supabase 초기화)
-* **Phase 1:** Auth (소셜 로그인, 프로필 닉네임 설정)
-* **Phase 2:** Post (목록, 상세, 작성, 수정, 삭제)
-* **Phase 3:** Poll (투표 스키마, 중복 방지, 결과 UI)
-* **Phase 4:** Comment (댓글 조회/작성/대댓글)
-* **Phase 5:** Editor + OG (Draft 저장, 이미지, URL 감지 및 Python API 호출)
-* **Phase 6:** MVP Launch (모바일 UX 최적화, 테스트, 배포)
+## 4. Development Steps
+MVP(PRD Phase 1) 내부의 구현 순서. PRD의 로드맵 Phase(2=타임어택 리그, 3=AI 아카이빙)와는 다른 체계다.
+* **Step 0:** Project Foundation (Next.js, Tailwind, Supabase 초기화)
+* **Step 1:** Auth (소셜 로그인, 프로필 닉네임 설정)
+* **Step 2:** Post (목록, 상세, 작성, 수정, 삭제)
+* **Step 3:** Poll (투표 스키마, 중복 방지, 결과 UI)
+* **Step 4:** Comment (댓글 조회/작성/대댓글)
+* **Step 5:** Editor + OG (Draft 저장, 이미지, URL 감지 및 Python API 호출)
+* **Step 6:** MVP Launch (모바일 UX 최적화, 테스트, 배포)
 
 ## 5. Task Formatting
 모든 기능 구현 요청은 다음 포맷을 따른다.
