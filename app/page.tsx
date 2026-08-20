@@ -12,7 +12,12 @@ interface PostRow {
   like_count: number;
   view_count: number;
   profiles: { nickname: string } | null;
+  comments: { count: number }[];
 }
+
+// 댓글수는 삭제되지 않은 댓글만 센다 (embedded 필터 `comments.deleted_at is null`).
+const POST_LIST_SELECT =
+  "id, title, created_at, like_count, view_count, profiles(nickname), comments(count)";
 
 export default async function Home(props: PageProps<"/">) {
   const searchParams = await props.searchParams;
@@ -24,8 +29,9 @@ export default async function Home(props: PageProps<"/">) {
   const [{ data: popularPosts }, { data: latestPosts }] = await Promise.all([
     supabase
       .from("posts")
-      .select("id, title, created_at, like_count, view_count, profiles(nickname)")
+      .select(POST_LIST_SELECT)
       .eq("status", "PUBLISHED")
+      .is("comments.deleted_at", null)
       .gte("created_at", seventyTwoHoursAgo)
       .order("like_count", { ascending: false })
       .order("created_at", { ascending: false })
@@ -33,8 +39,9 @@ export default async function Home(props: PageProps<"/">) {
       .returns<PostRow[]>(),
     supabase
       .from("posts")
-      .select("id, title, created_at, like_count, view_count, profiles(nickname)")
+      .select(POST_LIST_SELECT)
       .eq("status", "PUBLISHED")
+      .is("comments.deleted_at", null)
       .order("created_at", { ascending: false })
       .range(0, limit - 1)
       .returns<PostRow[]>(),
@@ -57,6 +64,7 @@ export default async function Home(props: PageProps<"/">) {
                 createdAt={post.created_at}
                 likeCount={post.like_count}
                 viewCount={post.view_count}
+                commentCount={post.comments[0]?.count ?? 0}
               />
             ))}
           </div>
@@ -78,6 +86,7 @@ export default async function Home(props: PageProps<"/">) {
                 createdAt={post.created_at}
                 likeCount={post.like_count}
                 viewCount={post.view_count}
+                commentCount={post.comments[0]?.count ?? 0}
               />
             ))}
           </div>

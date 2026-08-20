@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Markdown from "@/components/Markdown";
 import LikeButton from "@/components/LikeButton";
 import DeletePostButton from "@/components/DeletePostButton";
+import CommentSection, { type CommentNode } from "@/components/CommentSection";
 import { formatRelativeTime } from "@/lib/format";
 
 interface PostDetail {
@@ -57,6 +58,28 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
     initialLiked = Boolean(likeRow);
   }
 
+  const { data: comments } = await supabase
+    .from("comments")
+    .select(
+      "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
+    )
+    .eq("post_id", post.id)
+    .order("created_at", { ascending: true })
+    .returns<CommentNode[]>();
+
+  let likedCommentIds: string[] = [];
+  if (user && comments && comments.length > 0) {
+    const { data: commentLikes } = await supabase
+      .from("comment_likes")
+      .select("comment_id")
+      .eq("user_id", user.id)
+      .in(
+        "comment_id",
+        comments.map((c) => c.id),
+      );
+    likedCommentIds = commentLikes?.map((row) => row.comment_id as string) ?? [];
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-6">
       <div>
@@ -92,6 +115,13 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
           <DeletePostButton postId={post.id} />
         </div>
       )}
+
+      <CommentSection
+        postId={post.id}
+        currentUserId={user?.id ?? null}
+        initialComments={comments ?? []}
+        initialLikedCommentIds={likedCommentIds}
+      />
     </main>
   );
 }

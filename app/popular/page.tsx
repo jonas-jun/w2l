@@ -9,6 +9,7 @@ interface PostRow {
   like_count: number;
   view_count: number;
   profiles: { nickname: string } | null;
+  comments: { count: number }[];
 }
 
 export default async function PopularPage() {
@@ -17,8 +18,10 @@ export default async function PopularPage() {
 
   const { data: posts } = await supabase
     .from("posts")
-    .select("id, title, created_at, like_count, view_count, profiles(nickname)")
+    // 댓글수는 삭제되지 않은 댓글만 센다.
+    .select("id, title, created_at, like_count, view_count, profiles(nickname), comments(count)")
     .eq("status", "PUBLISHED")
+    .is("comments.deleted_at", null)
     .gte("created_at", seventyTwoHoursAgo)
     .order("like_count", { ascending: false })
     .order("created_at", { ascending: false })
@@ -38,6 +41,7 @@ export default async function PopularPage() {
               createdAt={post.created_at}
               likeCount={post.like_count}
               viewCount={post.view_count}
+              commentCount={post.comments[0]?.count ?? 0}
             />
           ))}
         </div>

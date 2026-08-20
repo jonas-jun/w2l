@@ -8,6 +8,7 @@ interface PostCardProps {
   createdAt: string;
   likeCount: number;
   viewCount: number;
+  commentCount: number;
 }
 
 export default function PostCard({
@@ -17,6 +18,7 @@ export default function PostCard({
   createdAt,
   likeCount,
   viewCount,
+  commentCount,
 }: PostCardProps) {
   return (
     <Link
@@ -31,6 +33,8 @@ export default function PostCard({
         <span>{formatRelativeTime(createdAt)}</span>
         <span>·</span>
         <span>추천 {likeCount}</span>
+        <span>·</span>
+        <span>댓글 {commentCount}</span>
         <span>·</span>
         <span>조회 {viewCount}</span>
       </div>
