@@ -1,13 +1,18 @@
 # Database Architecture & Rules
 
 ## 1. Core Data Models
+### 1.0 Board Model (`boards`)
+MVP는 게시판 1개(자유게시판)로 시작하지만, Phase 2에서 A vs B 토론장 등 게시판을 추가 생성할 수 있도록 처음부터 다중 게시판 구조로 둔다.
+* **Fields:** `id`, `slug` (UNIQUE), `name`, `display_order`, `created_at`
+* 게시판 생성·수정은 마이그레이션 또는 service_role로만 한다 (일반 사용자 쓰기 없음).
+
 ### 1.1 Post Model (`posts`)
 일반 게시글과 대결(Poll) 게시글을 하나의 모델로 관리.
-* **Fields:** `id`, `author_id`, `title`, `content`, `post_type` (NORMAL/POLL), `status` (DRAFT/PUBLISHED/DELETED), `view_count`, `like_count` (트리거 갱신 캐시), `created_at`, `updated_at`, `deleted_at`
+* **Fields:** `id`, `board_id`, `author_id`, `title`, `content`, `post_type` (NORMAL/POLL — POLL은 Phase 2), `status` (DRAFT/PUBLISHED/DELETED), `view_count`, `like_count` (트리거 갱신 캐시), `created_at`, `updated_at`, `deleted_at`
 * **Invariant:** `status = DELETED ⇔ deleted_at IS NOT NULL` (둘은 항상 함께 세팅한다)
 
-### 1.2 Poll Model (이벤트 테이블 구조)
-단순 카운터가 아닌 중복 투표 방지 및 추적을 위한 분리.
+### 1.2 Poll Model (이벤트 테이블 구조) — **Phase 2, MVP에서는 테이블을 생성하지 않는다**
+단순 카운터가 아닌 중복 투표 방지 및 추적을 위한 분리. 설계는 확정해두고 Phase 2 마이그레이션으로 도입한다.
 * **`polls`:** `id`, `post_id`, `created_at`, `closed_at` (MVP에서는 NULL — 마감 개념은 Phase 2 타임어택 리그용)
 * **`poll_options`:** `id`, `poll_id`, `label`, `display_order` — **MVP는 poll당 2개 고정 (A vs B).** `create_poll_post` RPC에서 강제한다.
 * **`poll_votes`:** `id`, `poll_id`, `option_id`, `user_id`, `created_at`
@@ -44,18 +49,18 @@ Cloud Run OG 파서 결과의 URL 단위 캐시 (ARCHITECTURE §4).
 * **Rule 4:** 사용자별 중복 행위는 DB Constraint로 방어.
 
 ## 3. Recommended ERD
-auth.users
-    │ (1:1)
-    └── profiles
-          │
-          ├── posts
+auth.users                          boards
+    │ (1:1)                            │ (1:N)
+    └── profiles                       │
+          │                            │
+          ├── posts ──────────────────┘
           │     ├── post_images
-          │     ├── polls
-          │     │     ├── poll_options
-          │     │     │     └── poll_votes
+          │     ├── polls                    (Phase 2)
+          │     │     ├── poll_options       (Phase 2)
+          │     │     │     └── poll_votes   (Phase 2)
           │     ├── post_likes
           │     └── comments
           │            └── comment_likes
-          └── (user activities — Phase 2, MVP 범위 아님)
+          └── (user activities — 로드맵 후순위, MVP 범위 아님)
 
 link_previews (독립 테이블 — URL 단위 OG 캐시, posts와 FK 없음)
