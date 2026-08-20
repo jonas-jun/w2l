@@ -11,8 +11,9 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MarkdownToolbar from "@/components/MarkdownToolbar";
+import MarkdownToolbar, { insertAtCursor } from "@/components/MarkdownToolbar";
 import Markdown from "@/components/Markdown";
+import ImageUploadButton, { type UploadedImage } from "@/components/ImageUploadButton";
 
 type PostFormProps =
   | { mode: "create"; boardId: string }
@@ -55,6 +56,8 @@ export default function PostForm(props: PostFormProps) {
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [draftDismissed, setDraftDismissed] = useState(false);
+  // 새 글은 아직 post_id가 없다 — 글이 만들어진 뒤에 post_images 행을 기록한다.
+  const [pendingImages, setPendingImages] = useState<UploadedImage[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -110,6 +113,40 @@ export default function PostForm(props: PostFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, storageKey, initialContent]);
 
+  async function recordPostImages(postId: string, images: UploadedImage[]) {
+    if (images.length === 0) return;
+
+    const supabase = createClient();
+    const { count } = await supabase
+      .from("post_images")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", postId);
+
+    const offset = count ?? 0;
+    await supabase.from("post_images").insert(
+      images.map((image, index) => ({
+        post_id: postId,
+        storage_path: image.storagePath,
+        display_order: offset + index,
+      })),
+    );
+  }
+
+  async function handleImageUploaded(image: UploadedImage) {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      setContent(insertAtCursor(textarea, `![](${image.publicUrl})`));
+    } else {
+      setContent((prev) => `${prev}\n![](${image.publicUrl})\n`);
+    }
+
+    if (props.mode === "edit") {
+      await recordPostImages(props.postId, [image]);
+      return;
+    }
+    setPendingImages((prev) => [...prev, image]);
+  }
+
   function clearDraft() {
     try {
       window.localStorage.removeItem(storageKey);
@@ -140,6 +177,7 @@ export default function PostForm(props: PostFormProps) {
         return;
       }
 
+      await recordPostImages(data.id, pendingImages);
       clearDraft();
       router.push(`/posts/${data.id}`);
       return;
@@ -182,6 +220,7 @@ export default function PostForm(props: PostFormProps) {
         return;
       }
 
+      await recordPostImages(data.id, pendingImages);
       clearDraft();
       // 이후 편집은 같은 Draft를 이어서 수정하도록 편집 화면으로 옮긴다.
       router.replace(`/write/${data.id}`);
@@ -264,7 +303,13 @@ export default function PostForm(props: PostFormProps) {
 
       {tab === "write" ? (
         <>
-          <MarkdownToolbar textareaRef={textareaRef} onChange={setContent} />
+          <MarkdownToolbar
+            textareaRef={textareaRef}
+            onChange={setContent}
+            imageSlot={
+              <ImageUploadButton onUploaded={handleImageUploaded} onError={setError} />
+            }
+          />
           <textarea
             ref={textareaRef}
             value={content}

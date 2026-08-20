@@ -32,6 +32,20 @@ export function wrapSelection(
   return next;
 }
 
+/** 커서 위치에 텍스트를 끼워 넣고, 커서를 삽입한 텍스트 뒤로 옮긴다. */
+export function insertAtCursor(textarea: HTMLTextAreaElement, text: string): string {
+  const { selectionStart, selectionEnd, value } = textarea;
+  const next = value.slice(0, selectionStart) + text + value.slice(selectionEnd);
+
+  requestAnimationFrame(() => {
+    textarea.focus();
+    const caret = selectionStart + text.length;
+    textarea.setSelectionRange(caret, caret);
+  });
+
+  return next;
+}
+
 export default function MarkdownToolbar({
   textareaRef,
   onChange,
