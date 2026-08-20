@@ -305,7 +305,7 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 - [x] T1.1 마이그레이션: profiles + boards
 - [x] T1.2 이메일 가입/로그인/온보딩
 - [x] T1.3 운영 계정 시딩 스크립트
-- [ ] T2.1 마이그레이션: posts + likes + RPC
+- [x] T2.1 마이그레이션: posts + likes + RPC
 - [ ] T2.2 작성/수정/삭제
 - [ ] T2.3 목록 (홈 + 인기)
 - [ ] T2.4 상세
