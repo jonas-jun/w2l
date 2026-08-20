@@ -43,6 +43,7 @@ next-env.d.ts
 # w2l project
 working/
 .claude/settings.local.json
+scripts/*.local.csv
 
 # commit key names only, never values
 !.env.example

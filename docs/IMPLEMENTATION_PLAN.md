@@ -301,20 +301,20 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 
 - [x] T0.1 Next.js 스캐폴드
 - [x] T0.2 Supabase 연결
-- [ ] T0.3 모바일 셸 + Bottom Nav
-- [ ] T1.1 마이그레이션: profiles + boards
-- [ ] T1.2 이메일 가입/로그인/온보딩
-- [ ] T1.3 운영 계정 시딩 스크립트
-- [ ] T2.1 마이그레이션: posts + likes + RPC
-- [ ] T2.2 작성/수정/삭제
-- [ ] T2.3 목록 (홈 + 인기)
-- [ ] T2.4 상세
-- [ ] T2.5 추천
-- [ ] T3.1 마이그레이션: comments
-- [ ] T3.2 댓글 UI
-- [ ] T3.3 댓글 Realtime
-- [ ] T4.1 에디터 + Draft 자동저장
-- [ ] T4.2 이미지 업로드
+- [x] T0.3 모바일 셸 + Bottom Nav
+- [x] T1.1 마이그레이션: profiles + boards
+- [x] T1.2 이메일 가입/로그인/온보딩
+- [x] T1.3 운영 계정 시딩 스크립트
+- [x] T2.1 마이그레이션: posts + likes + RPC
+- [x] T2.2 작성/수정/삭제
+- [x] T2.3 목록 (홈 + 인기)
+- [x] T2.4 상세
+- [x] T2.5 추천
+- [x] T3.1 마이그레이션: comments
+- [x] T3.2 댓글 UI
+- [x] T3.3 댓글 Realtime
+- [x] T4.1 에디터 + Draft 자동저장
+- [x] T4.2 이미지 업로드
 - [ ] T4.3 OG 파서 서비스
 - [ ] T4.4 URL 감지 → OG 카드
 - [ ] T5.1 UX 마감

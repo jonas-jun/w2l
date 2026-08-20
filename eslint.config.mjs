@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // supabase start가 생성하는 로컬 런타임 상태 (SQL 마이그레이션 외 소스 없음)
+    "supabase/.temp/**",
+    "supabase/.branches/**",
   ]),
 ]);
 

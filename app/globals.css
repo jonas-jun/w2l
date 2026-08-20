@@ -24,3 +24,60 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+.markdown-body h1 {
+  font-size: 1.4em;
+}
+.markdown-body h2 {
+  font-size: 1.2em;
+}
+.markdown-body h3 {
+  font-size: 1.1em;
+}
+.markdown-body p {
+  margin-bottom: 0.75em;
+}
+.markdown-body ul,
+.markdown-body ol {
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+.markdown-body ul {
+  list-style: disc;
+}
+.markdown-body ol {
+  list-style: decimal;
+}
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  margin: 0.5em 0;
+}
+.markdown-body a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.markdown-body code {
+  background: rgba(127, 127, 127, 0.15);
+  border-radius: 0.25em;
+  padding: 0.1em 0.3em;
+  font-family: var(--font-mono);
+}
+.markdown-body pre code {
+  display: block;
+  padding: 0.75em;
+  overflow-x: auto;
+}
+.markdown-body blockquote {
+  border-left: 3px solid rgba(127, 127, 127, 0.4);
+  padding-left: 0.75em;
+  color: rgba(127, 127, 127, 1);
+}
