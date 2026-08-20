@@ -75,21 +75,35 @@ curl -X POST http://localhost:8080/parse \
 
 ## Cloud Run 배포
 
-> 아래 명령은 **사용자가 직접 실행**한다. `PROJECT_ID`와 `REGION`을 채워 넣을 것.
+> 아래 명령은 **사용자가 직접 실행**한다. 저장소 루트에서 실행할 것.
+
+| 항목 | 값 | 비고 |
+|---|---|---|
+| 프로젝트 ID | `w2l-app` | GCP 프로젝트 ID는 **6~30자**라 `w2l`은 쓸 수 없다 |
+| 리전 | `asia-northeast3` (서울) | 사용자·파싱 대상 사이트가 대부분 국내다 |
+| 서비스 이름 | `og-parser` | |
 
 ```bash
-gcloud config set project PROJECT_ID
+# 0) 프로젝트 생성 (최초 1회) — 결제 계정 연결이 필요하다
+gcloud projects create w2l-app --name=w2l-app
+gcloud config set project w2l-app
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com secretmanager.googleapis.com
 
-# 1) 시크릿 생성 (최초 1회)
-openssl rand -hex 32 | gcloud secrets create og-parser-api-key --data-file=-
+# 1) 시크릿 생성 (최초 1회) — 출력된 값을 Next.js의 OG_PARSER_API_KEY에도 넣는다
+openssl rand -hex 32 | tee /dev/tty | gcloud secrets create og-parser-api-key --data-file=-
 
 # 2) 빌드 + 배포
 gcloud run deploy og-parser \
   --source og-parser \
-  --region REGION \
+  --region asia-northeast3 \
   --no-allow-unauthenticated \
   --set-secrets OG_PARSER_API_KEY=og-parser-api-key:latest
 ```
+
+Vercel 쪽 함수 리전도 서울(`icn1`)로 맞추면 Next.js → Cloud Run 호출이 국내에 머문다.
+다만 OG 파싱은 **글 작성 시점에만** 일어나고 결과는 `link_previews`에 캐시되므로
+(ARCHITECTURE.md §4), 이 구간 지연은 글 조회 성능에는 영향을 주지 않는다.
 
 `--no-allow-unauthenticated`로 공개 노출을 막고, Next.js 서버에서 호출할 서비스 계정에만
 `roles/run.invoker`를 부여한다.
