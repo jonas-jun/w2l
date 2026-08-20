@@ -22,6 +22,11 @@ export default function SignupPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        // 확인 메일의 링크가 돌아올 곳. 여기서 code를 세션으로 교환한다.
+        // 이메일 확인이 꺼져 있으면 무시된다.
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/nickname`,
+      },
     });
 
     setSubmitting(false);

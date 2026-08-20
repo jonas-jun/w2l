@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import AuthErrorNotice from "@/components/AuthErrorNotice";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,6 +37,9 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
       <h1 className="text-xl font-semibold">로그인</h1>
+      <Suspense fallback={null}>
+        <AuthErrorNotice />
+      </Suspense>
       <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">
         <input
           type="email"
