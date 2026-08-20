@@ -103,8 +103,17 @@ export default function CommentItem({
       {!editing && (
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
           <button
-            onClick={() => onToggleLike(comment.id, liked)}
-            className={liked ? "text-red-600" : "text-zinc-500 dark:text-zinc-400"}
+            onClick={async () => {
+              // 연타로 토글이 겹치지 않게 막는다.
+              if (pending) return;
+              setPending(true);
+              await onToggleLike(comment.id, liked);
+              setPending(false);
+            }}
+            disabled={pending}
+            className={`disabled:opacity-50 ${
+              liked ? "text-red-600" : "text-zinc-500 dark:text-zinc-400"
+            }`}
           >
             추천 {comment.like_count}
           </button>
@@ -124,7 +133,16 @@ export default function CommentItem({
               >
                 수정
               </button>
-              <button onClick={() => onDelete(comment.id)} className="text-red-600">
+              <button
+                onClick={async () => {
+                  if (pending) return;
+                  setPending(true);
+                  await onDelete(comment.id);
+                  setPending(false);
+                }}
+                disabled={pending}
+                className="text-red-600 disabled:opacity-50"
+              >
                 삭제
               </button>
             </>

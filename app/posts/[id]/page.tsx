@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -6,6 +7,7 @@ import LikeButton from "@/components/LikeButton";
 import DeletePostButton from "@/components/DeletePostButton";
 import CommentSection, { type CommentNode } from "@/components/CommentSection";
 import { formatRelativeTime } from "@/lib/format";
+import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
 
 interface PostDetail {
   id: string;
@@ -17,6 +19,40 @@ interface PostDetail {
   view_count: number;
   like_count: number;
   profiles: { nickname: string } | null;
+}
+
+export async function generateMetadata(
+  props: PageProps<"/posts/[id]">,
+): Promise<Metadata> {
+  const { id } = await props.params;
+  const supabase = await createClient();
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("title, content, status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!post || post.status !== "PUBLISHED") {
+    return { title: "찾을 수 없는 글" };
+  }
+
+  // 본문 앞부분을 설명으로 쓴다 (마크다운 기호는 대충 걷어낸다).
+  const description = (post.content as string)
+    .replace(/[#*`>[\]()!_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+
+  return {
+    title: post.title as string,
+    description: description || undefined,
+    openGraph: {
+      title: post.title as string,
+      description: description || undefined,
+      type: "article",
+    },
+  };
 }
 
 export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
@@ -58,6 +94,22 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
     initialLiked = Boolean(likeRow);
   }
 
+  // 본문의 단독 줄 URL은 이미 작성 시점에 파싱되어 캐시에 있다.
+  // 여기서는 DB만 읽는다 — 조회 시 파서를 호출하지 않는다 (ARCHITECTURE.md §4).
+  const standaloneUrls = extractStandaloneUrls(post.content);
+  const previews: Record<string, LinkPreview> = {};
+  if (standaloneUrls.length > 0) {
+    const { data: previewRows } = await supabase
+      .from("link_previews")
+      .select("url, og_title, og_description, og_image_url")
+      .in("url", standaloneUrls)
+      .returns<LinkPreview[]>();
+
+    for (const row of previewRows ?? []) {
+      previews[row.url] = row;
+    }
+  }
+
   const { data: comments } = await supabase
     .from("comments")
     .select(
@@ -93,7 +145,7 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
         </div>
       </div>
 
-      <Markdown content={post.content} />
+      <Markdown content={post.content} previews={previews} />
 
       <div className="flex items-center gap-3">
         <LikeButton

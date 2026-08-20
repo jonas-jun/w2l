@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import MarkdownToolbar, { insertAtCursor } from "@/components/MarkdownToolbar";
 import Markdown from "@/components/Markdown";
 import ImageUploadButton, { type UploadedImage } from "@/components/ImageUploadButton";
+import { extractStandaloneUrls } from "@/lib/og";
 
 type PostFormProps =
   | { mode: "create"; boardId: string }
@@ -113,6 +114,25 @@ export default function PostForm(props: PostFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, storageKey, initialContent]);
 
+  /**
+   * 본문의 단독 줄 URL을 작성 시점에 파싱해 캐시에 채운다 (ARCHITECTURE.md §4).
+   * 실패해도 글 등록을 막지 않는다 — 미리보기가 없으면 일반 링크로 보일 뿐이다.
+   */
+  async function warmLinkPreviews(body: string) {
+    const urls = extractStandaloneUrls(body);
+    if (urls.length === 0) return;
+
+    await Promise.allSettled(
+      urls.map((url) =>
+        fetch("/api/og", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        }),
+      ),
+    );
+  }
+
   async function recordPostImages(postId: string, images: UploadedImage[]) {
     if (images.length === 0) return;
 
@@ -178,6 +198,7 @@ export default function PostForm(props: PostFormProps) {
       }
 
       await recordPostImages(data.id, pendingImages);
+      await warmLinkPreviews(content);
       clearDraft();
       router.push(`/posts/${data.id}`);
       return;
@@ -196,6 +217,7 @@ export default function PostForm(props: PostFormProps) {
       return;
     }
 
+    await warmLinkPreviews(content);
     clearDraft();
     router.push(`/posts/${props.postId}`);
   }
