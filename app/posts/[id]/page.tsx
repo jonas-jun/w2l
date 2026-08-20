@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,40 @@ interface PostDetail {
   view_count: number;
   like_count: number;
   profiles: { nickname: string } | null;
+}
+
+export async function generateMetadata(
+  props: PageProps<"/posts/[id]">,
+): Promise<Metadata> {
+  const { id } = await props.params;
+  const supabase = await createClient();
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("title, content, status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!post || post.status !== "PUBLISHED") {
+    return { title: "찾을 수 없는 글" };
+  }
+
+  // 본문 앞부분을 설명으로 쓴다 (마크다운 기호는 대충 걷어낸다).
+  const description = (post.content as string)
+    .replace(/[#*`>[\]()!_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+
+  return {
+    title: post.title as string,
+    description: description || undefined,
+    openGraph: {
+      title: post.title as string,
+      description: description || undefined,
+      type: "article",
+    },
+  };
 }
 
 export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {

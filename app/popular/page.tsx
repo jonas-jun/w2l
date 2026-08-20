@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
 import { hoursAgoIso } from "@/lib/format";
+import type { Metadata } from "next";
 
 interface PostRow {
   id: string;
@@ -11,6 +12,11 @@ interface PostRow {
   profiles: { nickname: string } | null;
   comments: { count: number }[];
 }
+
+export const metadata: Metadata = {
+  title: "인기",
+  description: "최근 72시간 동안 가장 많은 추천을 받은 글.",
+};
 
 export default async function PopularPage() {
   const supabase = await createClient();

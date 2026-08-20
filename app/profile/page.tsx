@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import { formatRelativeTime } from "@/lib/format";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "프로필",
+  description: "내 정보와 임시저장한 글.",
+};
 
 export default async function ProfilePage() {
   const supabase = await createClient();
