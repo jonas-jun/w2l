@@ -40,6 +40,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# python (og-parser)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
 # w2l project
 working/
 .claude/settings.local.json
