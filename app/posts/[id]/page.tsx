@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Markdown from "@/components/Markdown";
+import LikeButton from "@/components/LikeButton";
 import DeletePostButton from "@/components/DeletePostButton";
 import { formatRelativeTime } from "@/lib/format";
 
@@ -45,6 +46,17 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
 
   await supabase.rpc("increment_view_count", { p_post_id: post.id });
 
+  let initialLiked = false;
+  if (user) {
+    const { data: likeRow } = await supabase
+      .from("post_likes")
+      .select("id")
+      .eq("post_id", post.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    initialLiked = Boolean(likeRow);
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-6">
       <div>
@@ -59,6 +71,15 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
       </div>
 
       <Markdown content={post.content} />
+
+      <div className="flex items-center gap-3">
+        <LikeButton
+          postId={post.id}
+          initialLikeCount={post.like_count}
+          initialLiked={initialLiked}
+          userId={user?.id ?? null}
+        />
+      </div>
 
       {isOwner && (
         <div className="flex gap-2 border-t border-black/10 pt-3 dark:border-white/10">
