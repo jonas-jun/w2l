@@ -299,7 +299,7 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 
 ## 진행 체크리스트
 
-- [ ] T0.1 Next.js 스캐폴드
+- [x] T0.1 Next.js 스캐폴드
 - [ ] T0.2 Supabase 연결
 - [ ] T0.3 모바일 셸 + Bottom Nav
 - [ ] T1.1 마이그레이션: profiles + boards
