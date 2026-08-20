@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import CommentItem from "@/components/CommentItem";
@@ -38,12 +38,57 @@ export default function CommentSection({
   const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Realtime: 지금 보고 있는 글의 댓글 INSERT만 구독한다.
+  // 범위를 넓히지 않는다 (ARCHITECTURE.md §4) — UPDATE/DELETE는 구독하지 않는다.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`comments:${postId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "comments",
+          filter: `post_id=eq.${postId}`,
+        },
+        async (payload) => {
+          const inserted = payload.new as { id: string };
+
+          // postgres_changes 페이로드에는 조인된 닉네임이 없으므로 해당 행만 다시 읽는다.
+          const { data } = await supabase
+            .from("comments")
+            .select(
+              "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
+            )
+            .eq("id", inserted.id)
+            .single<CommentNode>();
+
+          if (!data) return;
+
+          // 내가 쓴 댓글은 이미 낙관적으로 넣었으므로 중복을 막는다.
+          setComments((prev) =>
+            prev.some((c) => c.id === data.id) ? prev : [...prev, data],
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId]);
+
   // 원댓글은 created_at ASC, 대댓글은 부모 바로 아래에 붙인다.
+  // Realtime으로 도착한 댓글이 순서에 맞게 끼도록 항상 created_at으로 정렬한다.
   const threads = useMemo(() => {
-    const roots = comments.filter((c) => !c.parent_id);
+    const sorted = [...comments].sort((a, b) =>
+      a.created_at.localeCompare(b.created_at),
+    );
+    const roots = sorted.filter((c) => !c.parent_id);
     const repliesByParent = new Map<string, CommentNode[]>();
 
-    for (const comment of comments) {
+    for (const comment of sorted) {
       if (!comment.parent_id) continue;
       const list = repliesByParent.get(comment.parent_id) ?? [];
       list.push(comment);
