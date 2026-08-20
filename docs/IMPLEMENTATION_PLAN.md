@@ -302,7 +302,7 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 - [x] T0.1 Next.js 스캐폴드
 - [x] T0.2 Supabase 연결
 - [x] T0.3 모바일 셸 + Bottom Nav
-- [ ] T1.1 마이그레이션: profiles + boards
+- [x] T1.1 마이그레이션: profiles + boards
 - [ ] T1.2 이메일 가입/로그인/온보딩
 - [ ] T1.3 운영 계정 시딩 스크립트
 - [ ] T2.1 마이그레이션: posts + likes + RPC
