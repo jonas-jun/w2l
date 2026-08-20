@@ -13,6 +13,8 @@
 ## 요구 환경
 
 - Node.js 24 LTS 이상 (개발 환경 검증: v24.19.0, npm 11)
+- Supabase CLI (개발 환경 검증: v2.115.0) — 마이그레이션 관리용.
+  `npm run dev` 에는 필요 없고, `supabase db push` 등 DB 작업에만 쓴다.
 
 ## 시작하기
 
