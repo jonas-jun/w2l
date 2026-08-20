@@ -42,18 +42,25 @@ export default function CommentItem({
     );
   }
 
-  async function handleSaveEdit() {
+  /** 연타로 요청이 겹치지 않게 감싼다. 진행 중이면 무시한다. */
+  async function runPending<T>(action: () => Promise<T>): Promise<T | undefined> {
+    if (pending) return undefined;
     setPending(true);
-    const ok = await onUpdate(comment.id, editContent);
-    setPending(false);
+    try {
+      return await action();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleSaveEdit() {
+    const ok = await runPending(() => onUpdate(comment.id, editContent));
     if (ok) setEditing(false);
   }
 
   async function handleSubmitReply() {
     if (!onReply) return;
-    setPending(true);
-    const ok = await onReply(comment.id, replyContent);
-    setPending(false);
+    const ok = await runPending(() => onReply(comment.id, replyContent));
     if (ok) {
       setReplyContent("");
       setReplying(false);
@@ -103,13 +110,7 @@ export default function CommentItem({
       {!editing && (
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
           <button
-            onClick={async () => {
-              // 연타로 토글이 겹치지 않게 막는다.
-              if (pending) return;
-              setPending(true);
-              await onToggleLike(comment.id, liked);
-              setPending(false);
-            }}
+            onClick={() => runPending(() => onToggleLike(comment.id, liked))}
             disabled={pending}
             className={`disabled:opacity-50 ${
               liked ? "text-red-600" : "text-zinc-500 dark:text-zinc-400"
@@ -134,12 +135,7 @@ export default function CommentItem({
                 수정
               </button>
               <button
-                onClick={async () => {
-                  if (pending) return;
-                  setPending(true);
-                  await onDelete(comment.id);
-                  setPending(false);
-                }}
+                onClick={() => runPending(() => onDelete(comment.id))}
                 disabled={pending}
                 className="text-red-600 disabled:opacity-50"
               >

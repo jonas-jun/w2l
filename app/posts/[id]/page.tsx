@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -21,34 +22,44 @@ interface PostDetail {
   profiles: { nickname: string } | null;
 }
 
+/**
+ * generateMetadata와 페이지 본문이 같은 글을 각각 읽으면 요청마다 DB 왕복이 두 번 난다.
+ * cache()로 감싸 한 요청 안에서는 한 번만 조회한다.
+ */
+const getPost = cache(async (id: string) => {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("posts")
+    .select(
+      "id, title, content, status, author_id, created_at, view_count, like_count, profiles(nickname)",
+    )
+    .eq("id", id)
+    .maybeSingle<PostDetail>();
+  return data;
+});
+
 export async function generateMetadata(
   props: PageProps<"/posts/[id]">,
 ): Promise<Metadata> {
   const { id } = await props.params;
-  const supabase = await createClient();
-
-  const { data: post } = await supabase
-    .from("posts")
-    .select("title, content, status")
-    .eq("id", id)
-    .maybeSingle();
+  const post = await getPost(id);
 
   if (!post || post.status !== "PUBLISHED") {
     return { title: "찾을 수 없는 글" };
   }
 
   // 본문 앞부분을 설명으로 쓴다 (마크다운 기호는 대충 걷어낸다).
-  const description = (post.content as string)
+  const description = post.content
     .replace(/[#*`>[\]()!_-]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 120);
 
   return {
-    title: post.title as string,
+    title: post.title,
     description: description || undefined,
     openGraph: {
-      title: post.title as string,
+      title: post.title,
       description: description || undefined,
       type: "article",
     },
@@ -59,17 +70,13 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
   const { id } = await props.params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: post } = await supabase
-    .from("posts")
-    .select(
-      "id, title, content, status, author_id, created_at, view_count, like_count, profiles(nickname)",
-    )
-    .eq("id", id)
-    .maybeSingle<PostDetail>();
+  // 사용자 조회와 글 조회는 서로를 기다릴 필요가 없다.
+  const [
+    {
+      data: { user },
+    },
+    post,
+  ] = await Promise.all([supabase.auth.getUser(), getPost(id)]);
 
   if (!post || post.status === "DELETED") {
     notFound();
@@ -81,43 +88,47 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
     notFound();
   }
 
-  await supabase.rpc("increment_view_count", { p_post_id: post.id });
-
-  let initialLiked = false;
-  if (user) {
-    const { data: likeRow } = await supabase
-      .from("post_likes")
-      .select("id")
-      .eq("post_id", post.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-    initialLiked = Boolean(likeRow);
-  }
-
   // 본문의 단독 줄 URL은 이미 작성 시점에 파싱되어 캐시에 있다.
   // 여기서는 DB만 읽는다 — 조회 시 파서를 호출하지 않는다 (ARCHITECTURE.md §4).
   const standaloneUrls = extractStandaloneUrls(post.content);
-  const previews: Record<string, LinkPreview> = {};
-  if (standaloneUrls.length > 0) {
-    const { data: previewRows } = await supabase
-      .from("link_previews")
-      .select("url, og_title, og_description, og_image_url")
-      .in("url", standaloneUrls)
-      .returns<LinkPreview[]>();
 
-    for (const row of previewRows ?? []) {
-      previews[row.url] = row;
-    }
+  // 조회수 증가, 내 추천 여부, 링크 미리보기, 댓글은 서로 독립이다.
+  // DB가 다른 대륙에 있어 순차로 돌리면 왕복 지연이 그대로 쌓인다.
+  const [, likeRowResult, previewResult, commentsResult] = await Promise.all([
+    supabase.rpc("increment_view_count", { p_post_id: post.id }),
+    user
+      ? supabase
+          .from("post_likes")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("user_id", user.id)
+          .maybeSingle()
+      : null,
+    standaloneUrls.length > 0
+      ? supabase
+          .from("link_previews")
+          .select("url, og_title, og_description, og_image_url")
+          .in("url", standaloneUrls)
+          .returns<LinkPreview[]>()
+      : null,
+    supabase
+      .from("comments")
+      .select(
+        "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
+      )
+      .eq("post_id", post.id)
+      .order("created_at", { ascending: true })
+      .returns<CommentNode[]>(),
+  ]);
+
+  const initialLiked = Boolean(likeRowResult?.data);
+
+  const previews: Record<string, LinkPreview> = {};
+  for (const row of previewResult?.data ?? []) {
+    previews[row.url] = row;
   }
 
-  const { data: comments } = await supabase
-    .from("comments")
-    .select(
-      "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-    )
-    .eq("post_id", post.id)
-    .order("created_at", { ascending: true })
-    .returns<CommentNode[]>();
+  const comments = commentsResult.data;
 
   let likedCommentIds: string[] = [];
   if (user && comments && comments.length > 0) {

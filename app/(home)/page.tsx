@@ -2,22 +2,39 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
 import { hoursAgoIso } from "@/lib/format";
+import { POST_LIST_SELECT, type PostListRow } from "@/lib/posts";
 
 const PAGE_SIZE = 20;
 
-interface PostRow {
-  id: string;
-  title: string;
-  created_at: string;
-  like_count: number;
-  view_count: number;
-  profiles: { nickname: string } | null;
-  comments: { count: number }[];
+function PostSection({
+  heading,
+  posts,
+  emptyText,
+  children,
+}: {
+  heading: string;
+  posts: PostListRow[] | null;
+  emptyText: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+        {heading}
+      </h2>
+      {posts && posts.length > 0 ? (
+        <div>
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{emptyText}</p>
+      )}
+      {children}
+    </section>
+  );
 }
-
-// 댓글수는 삭제되지 않은 댓글만 센다 (embedded 필터 `comments.deleted_at is null`).
-const POST_LIST_SELECT =
-  "id, title, created_at, like_count, view_count, profiles(nickname), comments(count)";
 
 export default async function Home(props: PageProps<"/">) {
   const searchParams = await props.searchParams;
@@ -36,7 +53,7 @@ export default async function Home(props: PageProps<"/">) {
       .order("like_count", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(5)
-      .returns<PostRow[]>(),
+      .returns<PostListRow[]>(),
     supabase
       .from("posts")
       .select(POST_LIST_SELECT)
@@ -44,55 +61,19 @@ export default async function Home(props: PageProps<"/">) {
       .is("comments.deleted_at", null)
       .order("created_at", { ascending: false })
       .range(0, limit - 1)
-      .returns<PostRow[]>(),
+      .returns<PostListRow[]>(),
   ]);
 
   const hasMore = (latestPosts?.length ?? 0) >= limit;
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
-      <section>
-        <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">인기</h2>
-        {popularPosts && popularPosts.length > 0 ? (
-          <div>
-            {popularPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                id={post.id}
-                title={post.title}
-                nickname={post.profiles?.nickname ?? "알 수 없음"}
-                createdAt={post.created_at}
-                likeCount={post.like_count}
-                viewCount={post.view_count}
-                commentCount={post.comments[0]?.count ?? 0}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">아직 인기 글이 없습니다.</p>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">최신</h2>
-        {latestPosts && latestPosts.length > 0 ? (
-          <div>
-            {latestPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                id={post.id}
-                title={post.title}
-                nickname={post.profiles?.nickname ?? "알 수 없음"}
-                createdAt={post.created_at}
-                likeCount={post.like_count}
-                viewCount={post.view_count}
-                commentCount={post.comments[0]?.count ?? 0}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">아직 글이 없습니다.</p>
-        )}
+      <PostSection
+        heading="인기"
+        posts={popularPosts}
+        emptyText="아직 인기 글이 없습니다."
+      />
+      <PostSection heading="최신" posts={latestPosts} emptyText="아직 글이 없습니다.">
         {hasMore && (
           <Link
             href={`/?limit=${limit + PAGE_SIZE}`}
@@ -101,7 +82,7 @@ export default async function Home(props: PageProps<"/">) {
             더 보기
           </Link>
         )}
-      </section>
+      </PostSection>
     </main>
   );
 }
