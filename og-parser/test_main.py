@@ -300,6 +300,18 @@ def test_rejects_wrong_api_key(client):
     assert res.status_code == 401
 
 
+def test_tolerates_trailing_newline_in_secret(client, monkeypatch):
+    """시크릿 파일 끝의 개행 때문에 인증이 깨지지 않아야 한다."""
+    monkeypatch.setenv("OG_PARSER_API_KEY", f"{API_KEY}\n")
+    allow_public_dns(monkeypatch)
+    monkeypatch.setattr(main, "build_client", mock_transport(html_response))
+
+    res = client.post(
+        "/parse", json={"url": "https://example.com/"}, headers={"X-API-Key": API_KEY}
+    )
+    assert res.status_code == 200
+
+
 def test_fails_closed_without_configured_secret(client, monkeypatch):
     """시크릿 미설정 시 열어두지 않고 막는다."""
     monkeypatch.delenv("OG_PARSER_API_KEY", raising=False)

@@ -9,6 +9,7 @@
 
 import ipaddress
 import os
+import secrets
 import socket
 from urllib.parse import urljoin, urlparse
 
@@ -170,11 +171,12 @@ def extract_og(html: str, base_url: str) -> ParseResponse:
 
 
 def _require_api_key(provided: str | None) -> None:
-    expected = os.environ.get("OG_PARSER_API_KEY")
+    # 시크릿 파일 끝에 개행이 딸려 들어가는 일이 잦아 양끝 공백을 잘라낸다.
+    expected = (os.environ.get("OG_PARSER_API_KEY") or "").strip()
     if not expected:
         # 시크릿이 없으면 열어두지 않고 막는다.
         raise HTTPException(status_code=500, detail="OG_PARSER_API_KEY가 설정되지 않았습니다.")
-    if provided != expected:
+    if not secrets.compare_digest((provided or "").strip(), expected):
         raise HTTPException(status_code=401, detail="인증에 실패했습니다.")
 
 
