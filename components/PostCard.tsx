@@ -10,7 +10,7 @@ export default function PostCard({ post }: { post: PostListRow }) {
       className="flex flex-col gap-1 border-b border-black/10 py-3 dark:border-white/10"
     >
       <p className="font-medium">{post.title}</p>
-      <div className="flex flex-wrap gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap gap-x-2 text-xs text-muted">
         <span>{post.profiles?.nickname ?? "알 수 없음"}</span>
         <span>·</span>
         <span>{formatRelativeTime(post.created_at)}</span>

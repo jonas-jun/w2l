@@ -65,7 +65,7 @@ export default function NicknameOnboardingPage() {
           required
           className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <button
           type="submit"
           disabled={submitting}

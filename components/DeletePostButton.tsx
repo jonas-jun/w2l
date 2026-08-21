@@ -36,7 +36,7 @@ export default function DeletePostButton({ postId }: { postId: string }) {
     <button
       onClick={handleDelete}
       disabled={deleting}
-      className="rounded border border-red-400 px-3 py-1.5 text-sm text-red-600 disabled:opacity-50"
+      className="rounded border border-danger px-3 py-1.5 text-sm text-danger disabled:opacity-50"
     >
       삭제
     </button>

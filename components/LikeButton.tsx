@@ -61,7 +61,7 @@ export default function LikeButton({
       disabled={pending}
       className={`rounded border px-3 py-1.5 text-sm disabled:opacity-50 ${
         liked
-          ? "border-red-400 bg-red-50 text-red-600 dark:bg-red-950"
+          ? "border-danger bg-danger-bg text-danger"
           : "border-black/20 dark:border-white/20"
       }`}
     >

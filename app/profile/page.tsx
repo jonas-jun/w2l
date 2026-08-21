@@ -38,7 +38,7 @@ export default async function ProfilePage() {
       </div>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+        <h2 className="mb-2 text-sm font-semibold text-muted">
           임시저장 {drafts?.length ?? 0}
         </h2>
         {drafts && drafts.length > 0 ? (
@@ -52,14 +52,14 @@ export default async function ProfilePage() {
                 <p className="font-medium">
                   {draft.title.trim().length > 0 ? draft.title : "(제목 없음)"}
                 </p>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs text-muted">
                   {formatRelativeTime(draft.updated_at)}
                 </span>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted">
             임시저장한 글이 없습니다.
           </p>
         )}

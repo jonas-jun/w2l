@@ -33,7 +33,7 @@ export default async function PopularPage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           최근 72시간 내 인기 글이 없습니다.
         </p>
       )}

@@ -58,7 +58,7 @@ export default function LoginPage() {
           required
           className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
@@ -67,7 +67,7 @@ export default function LoginPage() {
           로그인
         </button>
       </form>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         계정이 없으신가요?{" "}
         <Link href="/signup" className="underline">
           회원가입

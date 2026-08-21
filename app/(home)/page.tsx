@@ -19,7 +19,7 @@ function PostSection({
 }) {
   return (
     <section>
-      <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-2 text-sm font-semibold text-muted">
         {heading}
       </h2>
       {posts && posts.length > 0 ? (
@@ -29,7 +29,7 @@ function PostSection({
           ))}
         </div>
       ) : (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{emptyText}</p>
+        <p className="text-sm text-muted">{emptyText}</p>
       )}
       {children}
     </section>

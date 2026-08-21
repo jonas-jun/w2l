@@ -147,7 +147,7 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
     <main className="flex flex-1 flex-col gap-4 p-6">
       <div>
         <h1 className="text-xl font-semibold">{post.title}</h1>
-        <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted">
           <span>{post.profiles?.nickname ?? "알 수 없음"}</span>
           <span>·</span>
           <span>{formatRelativeTime(post.created_at)}</span>
