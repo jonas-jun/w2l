@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatRelativeTime } from "@/lib/format";
-import type { CommentNode } from "@/components/CommentSection";
+import type { CommentNode } from "@/lib/comments";
 
 interface CommentItemProps {
   comment: CommentNode;

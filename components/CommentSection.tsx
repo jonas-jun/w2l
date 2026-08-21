@@ -4,18 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import CommentItem from "@/components/CommentItem";
-
-export interface CommentNode {
-  id: string;
-  post_id: string;
-  author_id: string;
-  parent_id: string | null;
-  content: string;
-  like_count: number;
-  created_at: string;
-  deleted_at: string | null;
-  profiles: { nickname: string } | null;
-}
+import { COMMENT_SELECT, type CommentNode } from "@/lib/comments";
 
 interface CommentSectionProps {
   postId: string;
@@ -58,9 +47,7 @@ export default function CommentSection({
           // postgres_changes 페이로드에는 조인된 닉네임이 없으므로 해당 행만 다시 읽는다.
           const { data } = await supabase
             .from("comments")
-            .select(
-              "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-            )
+            .select(COMMENT_SELECT)
             .eq("id", inserted.id)
             .single<CommentNode>();
 
@@ -123,9 +110,7 @@ export default function CommentSection({
     const { data, error } = await supabase
       .from("comments")
       .insert({ post_id: postId, content: trimmed, parent_id: parentId })
-      .select(
-        "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-      )
+      .select(COMMENT_SELECT)
       .single<CommentNode>();
 
     if (error || !data) return false;

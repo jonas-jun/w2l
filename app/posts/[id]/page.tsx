@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import PostBody from "@/components/PostBody";
 import LikeButton from "@/components/LikeButton";
 import DeletePostButton from "@/components/DeletePostButton";
-import CommentSection, { type CommentNode } from "@/components/CommentSection";
+import CommentSection from "@/components/CommentSection";
+import { COMMENT_SELECT, type CommentNode } from "@/lib/comments";
 import { formatRelativeTime } from "@/lib/format";
 import { toContentFormat } from "@/lib/posts";
 import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
@@ -116,9 +117,7 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
       : null,
     supabase
       .from("comments")
-      .select(
-        "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-      )
+      .select(COMMENT_SELECT)
       .eq("post_id", post.id)
       .order("created_at", { ascending: true })
       .returns<CommentNode[]>(),
