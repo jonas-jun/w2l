@@ -36,7 +36,7 @@ function standaloneUrlOf(children: ReactNode): string | null {
 
 export default function Markdown({ content, previews }: MarkdownProps) {
   return (
-    <div className="markdown-body text-sm leading-relaxed">
+    <div className="post-body text-sm leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={

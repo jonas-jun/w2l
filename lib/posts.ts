@@ -20,3 +20,20 @@ export const POST_LIST_SELECT =
 export function commentCountOf(post: PostListRow): number {
   return post.comments[0]?.count ?? 0;
 }
+
+/** 본문 저장 포맷. `posts.content_format` 의 값과 같다 (DATABASE.md §1.1). */
+export type ContentFormat = "MARKDOWN" | "PLAIN";
+
+/**
+ * 새 글의 기본 모드. 서식이 필요 없는 사용자가 다수라 평문을 기본으로 둔다
+ * (PRD Principle 3 — Low Friction). DB 컬럼 default 는 기존 글 백필 때문에 'MARKDOWN' 이다.
+ */
+export const DEFAULT_CONTENT_FORMAT: ContentFormat = "PLAIN";
+
+/**
+ * DB에서 읽은 값을 ContentFormat 으로 좁힌다. 알 수 없는 값은 Markdown 으로 폴백한다 —
+ * content_format 컬럼이 없던 시절 글의 렌더 동작과 같아야 한다.
+ */
+export function toContentFormat(value: unknown): ContentFormat {
+  return value === "PLAIN" ? "PLAIN" : "MARKDOWN";
+}
