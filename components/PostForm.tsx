@@ -423,7 +423,8 @@ export default function PostForm(props: PostFormProps) {
 
       {showFormatNotice && (
         <p className="rounded border border-warn bg-warn-bg px-2 py-1 text-xs text-strong">
-          이미 쓴 기호(*, #, _ 등)가 서식으로 해석될 수 있습니다. 미리보기로 확인해주세요.
+          줄바꿈이 한 문단으로 합쳐지고, 이미 쓴 기호(*, #, _ 등)가 서식으로 해석될 수
+          있습니다. 미리보기로 확인해주세요.
         </p>
       )}
 
