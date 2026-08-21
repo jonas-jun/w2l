@@ -46,7 +46,7 @@
   * **두 모드 공통:** 단독 줄 URL은 OG 카드로, 단독 줄 이미지 URL은 `<img>`로 렌더한다. 모드를 바꿔도 같은 본문이 같게 보여야 하기 때문이다(이미지 URL은 OG 파싱 대상에서 제외한다 — `lib/og.ts`의 `isImageUrl`). 단 마크다운에서 "단독 줄"은 문단 단위라, 앞 줄과 빈 줄로 떨어져 있지 않은 URL은 soft break로 합쳐져 카드가 되지 않는다.
 * **Editor & Auto Save:** content가 변경된 경우에만 LocalStorage에 5초 단위 debounce 임시저장 적용.
 * **Open Graph (OG) API:** SSRF 공격 방어를 위해 private IP, localhost 차단 및 redirect 제한이 적용된 별도 Python Microservice 운용.
-* **OG 캐시:** 파싱 결과는 `link_previews` 테이블에 URL 단위로 캐시한다 (`fetched_at` 기준 7일 경과 시 재파싱). 렌더링 시 Cloud Run을 직접 호출하지 않는다 — 작성 시점에 파싱·저장하고, 조회는 DB에서 읽는다.
+* **OG 캐시:** 파싱 결과는 `link_previews` 테이블에 URL 단위로 캐시한다 (`fetched_at` 기준 7일 경과 시 재파싱). 렌더링 시 Cloud Run을 직접 호출하지 않는다 — 작성 시점에 파싱·저장하고, 조회는 DB에서 읽는다. 작성 화면의 미리보기 탭도 같은 규칙이다(DB 캐시만 읽는다) — 그래서 한 번도 파싱된 적 없는 URL은 미리보기에서 일반 링크로 보이고, 등록 후 상세에서 카드가 된다.
 * **Real-time:** Supabase Realtime은 댓글 추가, 투표 결과 등 특정 요소에만 제한적으로 적용하여 비용/성능 최적화.
 
 ## 5. 운영 계정 시딩 (Seed Accounts)

@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import MarkdownToolbar, { insertAtCursor } from "@/components/MarkdownToolbar";
 import PostBody from "@/components/PostBody";
 import ImageUploadButton, { type UploadedImage } from "@/components/ImageUploadButton";
-import { extractStandaloneUrls } from "@/lib/og";
+import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
 import { DEFAULT_CONTENT_FORMAT, type ContentFormat } from "@/lib/posts";
 
 type PostFormProps =
@@ -77,6 +77,7 @@ export default function PostForm(props: PostFormProps) {
   );
   const [showFormatNotice, setShowFormatNotice] = useState(false);
   const [tab, setTab] = useState<"write" | "preview">("write");
+  const [previews, setPreviews] = useState<Record<string, LinkPreview>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -127,6 +128,38 @@ export default function PostForm(props: PostFormProps) {
     }
     return null;
   }, [rawDraft, draftDismissed, initialContent, initialTitle]);
+
+  /**
+   * 미리보기 탭은 상세 화면과 같은 결과를 보여야 한다 — 캐시된 OG 미리보기를 읽어 온다.
+   * 파서는 호출하지 않는다 (ARCHITECTURE.md §4 — 조회 시 파서 호출 금지). 그래서 아직 한 번도
+   * 파싱된 적 없는 URL은 미리보기에서 링크로 보이고, 등록 후 상세에서 카드가 된다.
+   */
+  useEffect(() => {
+    if (tab !== "preview") return;
+
+    const urls = extractStandaloneUrls(content);
+    if (urls.length === 0) return;
+
+    let ignore = false;
+    createClient()
+      .from("link_previews")
+      .select("url, og_title, og_description, og_image_url")
+      .in("url", urls)
+      .returns<LinkPreview[]>()
+      .then(({ data }) => {
+        if (ignore || !data || data.length === 0) return;
+        setPreviews((prev) => {
+          const next = { ...prev };
+          for (const row of data) next[row.url] = row;
+          return next;
+        });
+      });
+
+    // 탭을 벗어나거나 본문이 바뀌면 뒤늦게 온 응답은 버린다.
+    return () => {
+      ignore = true;
+    };
+  }, [tab, content]);
 
   // 자동저장: content가 변경된 경우에만 5초 debounce (ARCHITECTURE.md §4).
   useEffect(() => {
@@ -461,7 +494,7 @@ export default function PostForm(props: PostFormProps) {
       ) : (
         <div className="min-h-64 flex-1 overflow-y-auto rounded border border-black/20 px-3 py-2 dark:border-white/20">
           {content.trim().length > 0 ? (
-            <PostBody content={content} format={format} />
+            <PostBody content={content} format={format} previews={previews} />
           ) : (
             <p className="text-sm text-muted">미리볼 내용이 없습니다.</p>
           )}
