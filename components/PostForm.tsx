@@ -275,105 +275,75 @@ export default function PostForm(props: PostFormProps) {
     setDraftSavedAt(null);
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  /**
+   * 등록과 임시저장은 status 값과 성공 후 이동만 다르다 — 저장 흐름을 한곳에 둔다.
+   * DRAFT를 수정 후 등록(PUBLISHED)하면 그대로 공개된다.
+   */
+  async function savePost(status: "PUBLISHED" | "DRAFT") {
+    const isDraftSave = status === "DRAFT";
+    const setBusy = isDraftSave ? setSavingDraft : setSubmitting;
+    const failMessage = isDraftSave
+      ? "임시저장에 실패했습니다. 다시 시도해주세요."
+      : props.mode === "create"
+        ? "글 등록에 실패했습니다. 다시 시도해주세요."
+        : "글 저장에 실패했습니다. 다시 시도해주세요.";
+
     setError(null);
-    setSubmitting(true);
+    setBusy(true);
 
     const supabase = createClient();
+    const row = { title, content, content_format: format, status };
 
+    let postId: string;
     if (props.mode === "create") {
       const { data, error: insertError } = await supabase
         .from("posts")
-        .insert({
-          board_id: props.boardId,
-          title,
-          content,
-          content_format: format,
-          status: "PUBLISHED",
-        })
+        .insert({ ...row, board_id: props.boardId })
         .select("id")
         .single();
 
-      setSubmitting(false);
+      setBusy(false);
 
       if (insertError || !data) {
-        setError("글 등록에 실패했습니다. 다시 시도해주세요.");
+        setError(failMessage);
         return;
       }
 
       await recordPostImages(data.id, pendingImages);
-      await warmLinkPreviews(content);
-      clearDraft();
-      router.push(`/posts/${data.id}`);
-      return;
+      postId = data.id;
+    } else {
+      const { error: updateError } = await supabase
+        .from("posts")
+        .update(row)
+        .eq("id", props.postId);
+
+      setBusy(false);
+
+      if (updateError) {
+        setError(failMessage);
+        return;
+      }
+
+      postId = props.postId;
     }
 
-    // DRAFT를 수정 후 등록하면 그대로 공개된다.
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ title, content, content_format: format, status: "PUBLISHED" })
-      .eq("id", props.postId);
-
-    setSubmitting(false);
-
-    if (updateError) {
-      setError("글 저장에 실패했습니다. 다시 시도해주세요.");
-      return;
-    }
-
-    await warmLinkPreviews(content);
+    // 임시저장 본문은 아직 공개되지 않으므로 OG 캐시를 미리 채우지 않는다.
+    if (!isDraftSave) await warmLinkPreviews(content);
     clearDraft();
-    router.push(`/posts/${props.postId}`);
+
+    if (!isDraftSave) {
+      router.push(`/posts/${postId}`);
+    } else if (props.mode === "create") {
+      // 이후 편집은 같은 Draft를 이어서 수정하도록 편집 화면으로 옮긴다.
+      router.replace(`/write/${postId}`);
+    } else {
+      router.refresh();
+    }
   }
 
-  async function handleSaveDraft() {
-    setError(null);
-    setSavingDraft(true);
-
-    const supabase = createClient();
-
-    if (props.mode === "create") {
-      const { data, error: insertError } = await supabase
-        .from("posts")
-        .insert({
-          board_id: props.boardId,
-          title,
-          content,
-          content_format: format,
-          status: "DRAFT",
-        })
-        .select("id")
-        .single();
-
-      setSavingDraft(false);
-
-      if (insertError || !data) {
-        setError("임시저장에 실패했습니다. 다시 시도해주세요.");
-        return;
-      }
-
-      await recordPostImages(data.id, pendingImages);
-      clearDraft();
-      // 이후 편집은 같은 Draft를 이어서 수정하도록 편집 화면으로 옮긴다.
-      router.replace(`/write/${data.id}`);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ title, content, content_format: format, status: "DRAFT" })
-      .eq("id", props.postId);
-
-    setSavingDraft(false);
-
-    if (updateError) {
-      setError("임시저장에 실패했습니다. 다시 시도해주세요.");
-      return;
-    }
-
-    clearDraft();
-    router.refresh();
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await savePost("PUBLISHED");
   }
 
   const isDraft = props.mode === "edit" && props.initialStatus === "DRAFT";
@@ -520,7 +490,7 @@ export default function PostForm(props: PostFormProps) {
         </button>
         <button
           type="button"
-          onClick={handleSaveDraft}
+          onClick={() => savePost("DRAFT")}
           disabled={submitting || savingDraft}
           className="rounded border border-black/20 px-4 py-2 disabled:opacity-50 dark:border-white/20"
         >
