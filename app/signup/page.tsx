@@ -41,8 +41,9 @@ export default function SignupPage() {
       return;
     }
 
+    // 세션에 따라 동적으로 렌더되므로 push만으로 이미 최신 상태를 받는다.
+    // 직후에 refresh()까지 부르면 진행 중인 전환과 경합해 화면이 멈출 수 있다.
     router.push("/onboarding/nickname");
-    router.refresh();
   }
 
   if (confirmPending) {
