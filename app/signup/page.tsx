@@ -64,7 +64,7 @@ export default function SignupPage() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="이메일"
           required
-          className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
+          className="rounded border border-border px-3 py-2"
         />
         <input
           type="password"
@@ -73,7 +73,7 @@ export default function SignupPage() {
           placeholder="비밀번호 (6자 이상)"
           required
           minLength={6}
-          className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
+          className="rounded border border-border px-3 py-2"
         />
         {error && <p className="text-sm text-danger">{error}</p>}
         <button

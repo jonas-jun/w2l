@@ -63,7 +63,7 @@ export default function NicknameOnboardingPage() {
           placeholder="닉네임 (2~12자)"
           maxLength={12}
           required
-          className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
+          className="rounded border border-border px-3 py-2"
         />
         {error && <p className="text-sm text-danger">{error}</p>}
         <button

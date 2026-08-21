@@ -14,8 +14,17 @@ import { createClient } from "@/lib/supabase/client";
 import MarkdownToolbar, { insertAtCursor } from "@/components/MarkdownToolbar";
 import PostBody from "@/components/PostBody";
 import ImageUploadButton, { type UploadedImage } from "@/components/ImageUploadButton";
-import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
-import { DEFAULT_CONTENT_FORMAT, type ContentFormat } from "@/lib/posts";
+import {
+  LINK_PREVIEW_SELECT,
+  extractStandaloneUrls,
+  toPreviewMap,
+  type LinkPreview,
+} from "@/lib/og";
+import {
+  DEFAULT_CONTENT_FORMAT,
+  isContentFormat,
+  type ContentFormat,
+} from "@/lib/posts";
 
 type PostFormProps =
   | { mode: "create"; boardId: string }
@@ -110,10 +119,7 @@ export default function PostForm(props: PostFormProps) {
   );
 
   const format: ContentFormat =
-    formatChoice ??
-    (storedFormat === "PLAIN" || storedFormat === "MARKDOWN"
-      ? storedFormat
-      : DEFAULT_CONTENT_FORMAT);
+    formatChoice ?? (isContentFormat(storedFormat) ? storedFormat : DEFAULT_CONTENT_FORMAT);
 
   // 저장된 임시본이 현재 내용과 다를 때만 복원 배너를 띄운다.
   const restorable = useMemo<DraftSnapshot | null>(() => {
@@ -143,16 +149,12 @@ export default function PostForm(props: PostFormProps) {
     let ignore = false;
     createClient()
       .from("link_previews")
-      .select("url, og_title, og_description, og_image_url")
+      .select(LINK_PREVIEW_SELECT)
       .in("url", urls)
       .returns<LinkPreview[]>()
       .then(({ data }) => {
         if (ignore || !data || data.length === 0) return;
-        setPreviews((prev) => {
-          const next = { ...prev };
-          for (const row of data) next[row.url] = row;
-          return next;
-        });
+        setPreviews((prev) => ({ ...prev, ...toPreviewMap(data) }));
       });
 
     // 탭을 벗어나거나 본문이 바뀌면 뒤늦게 온 응답은 버린다.
@@ -273,105 +275,75 @@ export default function PostForm(props: PostFormProps) {
     setDraftSavedAt(null);
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  /**
+   * 등록과 임시저장은 status 값과 성공 후 이동만 다르다 — 저장 흐름을 한곳에 둔다.
+   * DRAFT를 수정 후 등록(PUBLISHED)하면 그대로 공개된다.
+   */
+  async function savePost(status: "PUBLISHED" | "DRAFT") {
+    const isDraftSave = status === "DRAFT";
+    const setBusy = isDraftSave ? setSavingDraft : setSubmitting;
+    const failMessage = isDraftSave
+      ? "임시저장에 실패했습니다. 다시 시도해주세요."
+      : props.mode === "create"
+        ? "글 등록에 실패했습니다. 다시 시도해주세요."
+        : "글 저장에 실패했습니다. 다시 시도해주세요.";
+
     setError(null);
-    setSubmitting(true);
+    setBusy(true);
 
     const supabase = createClient();
+    const row = { title, content, content_format: format, status };
 
+    let postId: string;
     if (props.mode === "create") {
       const { data, error: insertError } = await supabase
         .from("posts")
-        .insert({
-          board_id: props.boardId,
-          title,
-          content,
-          content_format: format,
-          status: "PUBLISHED",
-        })
+        .insert({ ...row, board_id: props.boardId })
         .select("id")
         .single();
 
-      setSubmitting(false);
+      setBusy(false);
 
       if (insertError || !data) {
-        setError("글 등록에 실패했습니다. 다시 시도해주세요.");
+        setError(failMessage);
         return;
       }
 
       await recordPostImages(data.id, pendingImages);
-      await warmLinkPreviews(content);
-      clearDraft();
-      router.push(`/posts/${data.id}`);
-      return;
+      postId = data.id;
+    } else {
+      const { error: updateError } = await supabase
+        .from("posts")
+        .update(row)
+        .eq("id", props.postId);
+
+      setBusy(false);
+
+      if (updateError) {
+        setError(failMessage);
+        return;
+      }
+
+      postId = props.postId;
     }
 
-    // DRAFT를 수정 후 등록하면 그대로 공개된다.
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ title, content, content_format: format, status: "PUBLISHED" })
-      .eq("id", props.postId);
-
-    setSubmitting(false);
-
-    if (updateError) {
-      setError("글 저장에 실패했습니다. 다시 시도해주세요.");
-      return;
-    }
-
-    await warmLinkPreviews(content);
+    // 임시저장 본문은 아직 공개되지 않으므로 OG 캐시를 미리 채우지 않는다.
+    if (!isDraftSave) await warmLinkPreviews(content);
     clearDraft();
-    router.push(`/posts/${props.postId}`);
+
+    if (!isDraftSave) {
+      router.push(`/posts/${postId}`);
+    } else if (props.mode === "create") {
+      // 이후 편집은 같은 Draft를 이어서 수정하도록 편집 화면으로 옮긴다.
+      router.replace(`/write/${postId}`);
+    } else {
+      router.refresh();
+    }
   }
 
-  async function handleSaveDraft() {
-    setError(null);
-    setSavingDraft(true);
-
-    const supabase = createClient();
-
-    if (props.mode === "create") {
-      const { data, error: insertError } = await supabase
-        .from("posts")
-        .insert({
-          board_id: props.boardId,
-          title,
-          content,
-          content_format: format,
-          status: "DRAFT",
-        })
-        .select("id")
-        .single();
-
-      setSavingDraft(false);
-
-      if (insertError || !data) {
-        setError("임시저장에 실패했습니다. 다시 시도해주세요.");
-        return;
-      }
-
-      await recordPostImages(data.id, pendingImages);
-      clearDraft();
-      // 이후 편집은 같은 Draft를 이어서 수정하도록 편집 화면으로 옮긴다.
-      router.replace(`/write/${data.id}`);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ title, content, content_format: format, status: "DRAFT" })
-      .eq("id", props.postId);
-
-    setSavingDraft(false);
-
-    if (updateError) {
-      setError("임시저장에 실패했습니다. 다시 시도해주세요.");
-      return;
-    }
-
-    clearDraft();
-    router.refresh();
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await savePost("PUBLISHED");
   }
 
   const isDraft = props.mode === "edit" && props.initialStatus === "DRAFT";
@@ -388,7 +360,7 @@ export default function PostForm(props: PostFormProps) {
               setTitle(restorable.title);
               setContent(restorable.content);
               // format이 없거나 알 수 없는 값인 임시본은 현재 모드를 유지한다.
-              if (restorable.format === "PLAIN" || restorable.format === "MARKDOWN") {
+              if (isContentFormat(restorable.format)) {
                 setFormatChoice(restorable.format);
               }
               setDraftDismissed(true);
@@ -403,7 +375,7 @@ export default function PostForm(props: PostFormProps) {
               clearDraft();
               setDraftDismissed(true);
             }}
-            className="rounded border border-black/20 px-2 py-1 dark:border-white/20"
+            className="rounded border border-border px-2 py-1"
           >
             삭제
           </button>
@@ -416,7 +388,7 @@ export default function PostForm(props: PostFormProps) {
         placeholder="제목"
         required
         maxLength={200}
-        className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
+        className="rounded border border-border px-3 py-2"
       />
 
       <div className="flex items-center gap-2 text-sm">
@@ -435,7 +407,7 @@ export default function PostForm(props: PostFormProps) {
           미리보기
         </button>
 
-        <div className="ml-auto flex overflow-hidden rounded border border-black/20 text-xs dark:border-white/20">
+        <div className="ml-auto flex overflow-hidden rounded border border-border text-xs">
           {FORMAT_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -486,13 +458,13 @@ export default function PostForm(props: PostFormProps) {
             }
             required
             rows={16}
-            className={`flex-1 resize-none rounded border border-black/20 px-3 py-2 text-sm dark:border-white/20 ${
+            className={`flex-1 resize-none rounded border border-border px-3 py-2 text-sm ${
               format === "MARKDOWN" ? "font-mono" : ""
             }`}
           />
         </>
       ) : (
-        <div className="min-h-64 flex-1 overflow-y-auto rounded border border-black/20 px-3 py-2 dark:border-white/20">
+        <div className="min-h-64 flex-1 overflow-y-auto rounded border border-border px-3 py-2">
           {content.trim().length > 0 ? (
             <PostBody content={content} format={format} previews={previews} />
           ) : (
@@ -518,9 +490,9 @@ export default function PostForm(props: PostFormProps) {
         </button>
         <button
           type="button"
-          onClick={handleSaveDraft}
+          onClick={() => savePost("DRAFT")}
           disabled={submitting || savingDraft}
-          className="rounded border border-black/20 px-4 py-2 disabled:opacity-50 dark:border-white/20"
+          className="rounded border border-border px-4 py-2 disabled:opacity-50"
         >
           임시저장
         </button>

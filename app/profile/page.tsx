@@ -47,7 +47,7 @@ export default async function ProfilePage() {
               <Link
                 key={draft.id}
                 href={`/write/${draft.id}`}
-                className="flex flex-col gap-1 border-b border-black/10 py-3 dark:border-white/10"
+                className="flex flex-col gap-1 border-b border-border/40 py-3"
               >
                 <p className="font-medium">
                   {draft.title.trim().length > 0 ? draft.title : "(제목 없음)"}

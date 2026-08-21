@@ -62,7 +62,7 @@ export default function LikeButton({
       className={`rounded border px-3 py-1.5 text-sm disabled:opacity-50 ${
         liked
           ? "border-danger bg-danger-bg text-danger"
-          : "border-black/20 dark:border-white/20"
+          : "border-border"
       }`}
     >
       추천 {likeCount}

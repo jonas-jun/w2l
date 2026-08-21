@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatRelativeTime } from "@/lib/format";
-import type { CommentNode } from "@/components/CommentSection";
+import type { CommentNode } from "@/lib/comments";
 
 interface CommentItemProps {
   comment: CommentNode;
@@ -36,7 +36,7 @@ export default function CommentItem({
 
   if (comment.deleted_at) {
     return (
-      <div className={`border-b border-black/5 py-2 dark:border-white/5 ${indentClass}`}>
+      <div className={`border-b border-border/20 py-2 ${indentClass}`}>
         <p className="text-sm text-muted">삭제된 댓글입니다.</p>
       </div>
     );
@@ -68,7 +68,7 @@ export default function CommentItem({
   }
 
   return (
-    <div className={`border-b border-black/5 py-2 dark:border-white/5 ${indentClass}`}>
+    <div className={`border-b border-border/20 py-2 ${indentClass}`}>
       <div className="flex flex-wrap gap-x-2 text-xs text-muted">
         <span className="font-medium text-strong">
           {comment.profiles?.nickname ?? "알 수 없음"}
@@ -82,7 +82,7 @@ export default function CommentItem({
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             rows={3}
-            className="rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+            className="rounded border border-border px-2 py-1 text-sm"
           />
           <div className="flex gap-2">
             <button
@@ -97,7 +97,7 @@ export default function CommentItem({
                 setEditing(false);
                 setEditContent(comment.content);
               }}
-              className="rounded border border-black/20 px-3 py-1 text-xs dark:border-white/20"
+              className="rounded border border-border px-3 py-1 text-xs"
             >
               취소
             </button>
@@ -153,7 +153,7 @@ export default function CommentItem({
             onChange={(e) => setReplyContent(e.target.value)}
             rows={2}
             placeholder="답글을 입력하세요"
-            className="rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+            className="rounded border border-border px-2 py-1 text-sm"
           />
           <button
             onClick={handleSubmitReply}

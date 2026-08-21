@@ -4,18 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import CommentItem from "@/components/CommentItem";
-
-export interface CommentNode {
-  id: string;
-  post_id: string;
-  author_id: string;
-  parent_id: string | null;
-  content: string;
-  like_count: number;
-  created_at: string;
-  deleted_at: string | null;
-  profiles: { nickname: string } | null;
-}
+import { COMMENT_SELECT, type CommentNode } from "@/lib/comments";
 
 interface CommentSectionProps {
   postId: string;
@@ -58,9 +47,7 @@ export default function CommentSection({
           // postgres_changes 페이로드에는 조인된 닉네임이 없으므로 해당 행만 다시 읽는다.
           const { data } = await supabase
             .from("comments")
-            .select(
-              "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-            )
+            .select(COMMENT_SELECT)
             .eq("id", inserted.id)
             .single<CommentNode>();
 
@@ -123,9 +110,7 @@ export default function CommentSection({
     const { data, error } = await supabase
       .from("comments")
       .insert({ post_id: postId, content: trimmed, parent_id: parentId })
-      .select(
-        "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-      )
+      .select(COMMENT_SELECT)
       .single<CommentNode>();
 
     if (error || !data) return false;
@@ -217,7 +202,7 @@ export default function CommentSection({
   }
 
   return (
-    <section className="flex flex-col gap-2 border-t border-black/10 pt-4 dark:border-white/10">
+    <section className="flex flex-col gap-2 border-t border-border/40 pt-4">
       <h2 className="text-sm font-semibold">댓글 {visibleCount}</h2>
 
       <div>
@@ -261,7 +246,7 @@ export default function CommentSection({
           onChange={(e) => setNewContent(e.target.value)}
           rows={3}
           placeholder={currentUserId ? "댓글을 입력하세요" : "로그인 후 댓글을 남길 수 있습니다"}
-          className="rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+          className="rounded border border-border px-2 py-1 text-sm"
         />
         <button
           onClick={handleSubmitNew}

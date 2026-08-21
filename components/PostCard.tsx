@@ -7,7 +7,7 @@ export default function PostCard({ post }: { post: PostListRow }) {
     <Link
       href={`/posts/${post.id}`}
       prefetch={false}
-      className="flex flex-col gap-1 border-b border-black/10 py-3 dark:border-white/10"
+      className="flex flex-col gap-1 border-b border-border/40 py-3"
     >
       <p className="font-medium">{post.title}</p>
       <div className="flex flex-wrap gap-x-2 text-xs text-muted">

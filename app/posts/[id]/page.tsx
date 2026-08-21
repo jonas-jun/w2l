@@ -6,10 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 import PostBody from "@/components/PostBody";
 import LikeButton from "@/components/LikeButton";
 import DeletePostButton from "@/components/DeletePostButton";
-import CommentSection, { type CommentNode } from "@/components/CommentSection";
+import CommentSection from "@/components/CommentSection";
+import { COMMENT_SELECT, type CommentNode } from "@/lib/comments";
 import { formatRelativeTime } from "@/lib/format";
 import { toContentFormat } from "@/lib/posts";
-import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
+import {
+  LINK_PREVIEW_SELECT,
+  extractStandaloneUrls,
+  toPreviewMap,
+  type LinkPreview,
+} from "@/lib/og";
 
 interface PostDetail {
   id: string;
@@ -110,27 +116,20 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
     standaloneUrls.length > 0
       ? supabase
           .from("link_previews")
-          .select("url, og_title, og_description, og_image_url")
+          .select(LINK_PREVIEW_SELECT)
           .in("url", standaloneUrls)
           .returns<LinkPreview[]>()
       : null,
     supabase
       .from("comments")
-      .select(
-        "id, post_id, author_id, parent_id, content, like_count, created_at, deleted_at, profiles(nickname)",
-      )
+      .select(COMMENT_SELECT)
       .eq("post_id", post.id)
       .order("created_at", { ascending: true })
       .returns<CommentNode[]>(),
   ]);
 
   const initialLiked = Boolean(likeRowResult?.data);
-
-  const previews: Record<string, LinkPreview> = {};
-  for (const row of previewResult?.data ?? []) {
-    previews[row.url] = row;
-  }
-
+  const previews = toPreviewMap(previewResult?.data);
   const comments = commentsResult.data;
 
   let likedCommentIds: string[] = [];
@@ -175,10 +174,10 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
       </div>
 
       {isOwner && (
-        <div className="flex gap-2 border-t border-black/10 pt-3 dark:border-white/10">
+        <div className="flex gap-2 border-t border-border/40 pt-3">
           <Link
             href={`/write/${post.id}`}
-            className="rounded border border-black/20 px-3 py-1.5 text-sm dark:border-white/20"
+            className="rounded border border-border px-3 py-1.5 text-sm"
           >
             수정
           </Link>
