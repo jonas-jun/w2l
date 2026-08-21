@@ -1,17 +1,8 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
 import { hoursAgoIso } from "@/lib/format";
-import type { Metadata } from "next";
-
-interface PostRow {
-  id: string;
-  title: string;
-  created_at: string;
-  like_count: number;
-  view_count: number;
-  profiles: { nickname: string } | null;
-  comments: { count: number }[];
-}
+import { POST_LIST_SELECT, type PostListRow } from "@/lib/posts";
 
 export const metadata: Metadata = {
   title: "인기",
@@ -24,14 +15,13 @@ export default async function PopularPage() {
 
   const { data: posts } = await supabase
     .from("posts")
-    // 댓글수는 삭제되지 않은 댓글만 센다.
-    .select("id, title, created_at, like_count, view_count, profiles(nickname), comments(count)")
+    .select(POST_LIST_SELECT)
     .eq("status", "PUBLISHED")
     .is("comments.deleted_at", null)
     .gte("created_at", seventyTwoHoursAgo)
     .order("like_count", { ascending: false })
     .order("created_at", { ascending: false })
-    .returns<PostRow[]>();
+    .returns<PostListRow[]>();
 
   return (
     <main className="flex flex-1 flex-col p-6">
@@ -39,16 +29,7 @@ export default async function PopularPage() {
       {posts && posts.length > 0 ? (
         <div>
           {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              id={post.id}
-              title={post.title}
-              nickname={post.profiles?.nickname ?? "알 수 없음"}
-              createdAt={post.created_at}
-              likeCount={post.like_count}
-              viewCount={post.view_count}
-              commentCount={post.comments[0]?.count ?? 0}
-            />
+            <PostCard key={post.id} post={post} />
           ))}
         </div>
       ) : (

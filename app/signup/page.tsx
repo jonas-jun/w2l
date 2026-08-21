@@ -22,6 +22,11 @@ export default function SignupPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        // 확인 메일의 링크가 돌아올 곳. 여기서 code를 세션으로 교환한다.
+        // 이메일 확인이 꺼져 있으면 무시된다.
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/nickname`,
+      },
     });
 
     setSubmitting(false);
@@ -36,8 +41,9 @@ export default function SignupPage() {
       return;
     }
 
+    // 세션에 따라 동적으로 렌더되므로 push만으로 이미 최신 상태를 받는다.
+    // 직후에 refresh()까지 부르면 진행 중인 전환과 경합해 화면이 멈출 수 있다.
     router.push("/onboarding/nickname");
-    router.refresh();
   }
 
   if (confirmPending) {

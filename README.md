@@ -33,6 +33,7 @@ npm run dev                  # http://localhost:3000
 | `npm start` | 빌드 결과 실행 |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | 타입 체크 |
+| `npm run seed:accounts` | 운영 계정 시딩 (로컬 전용 — `scripts/accounts.local.csv` + service_role key 필요) |
 
 ## 디렉토리
 

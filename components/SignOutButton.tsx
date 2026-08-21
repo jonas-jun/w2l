@@ -9,8 +9,8 @@ export default function SignOutButton() {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
+    // push 직후 refresh()를 더 부르면 진행 중인 전환과 경합해 화면이 멈출 수 있다.
     router.push("/login");
-    router.refresh();
   }
 
   return (

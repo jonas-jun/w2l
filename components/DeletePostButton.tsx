@@ -27,8 +27,9 @@ export default function DeletePostButton({ postId }: { postId: string }) {
       return;
     }
 
+    // push만으로 삭제가 반영된 홈을 받는다 (동적 렌더). refresh()를 더 부르면
+    // 진행 중인 전환과 경합해 화면이 멈출 수 있다.
     router.push("/");
-    router.refresh();
   }
 
   return (

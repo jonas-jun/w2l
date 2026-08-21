@@ -131,7 +131,7 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
   `/write`·`/profile`은 미로그인 시 `/login`으로 리다이렉트.
 
 ### T1.3 운영 계정 시딩 스크립트
-* **Goal:** 운영자용 계정 약 20개 일괄 생성 (`ARCHITECTURE.md` §5).
+* **Goal:** 운영자용 계정 10개 일괄 생성 (`ARCHITECTURE.md` §5).
 * **Scope:** `scripts/seed-accounts.ts` — 로컬 CSV(`scripts/accounts.local.csv`,
   gitignore 대상: email,password,nickname)를 읽어 `auth.admin.createUser({ email_confirm: true })`
   + `profiles` INSERT. 멱등(이미 있으면 skip). `SUPABASE_SERVICE_ROLE_KEY`는 env로만 주입.
