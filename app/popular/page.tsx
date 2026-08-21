@@ -1,27 +1,16 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
-import { hoursAgoIso } from "@/lib/format";
-import { POST_LIST_SELECT, type PostListRow } from "@/lib/posts";
+import { POPULAR_WINDOW_HOURS, fetchPopularPosts } from "@/lib/posts";
 
 export const metadata: Metadata = {
   title: "인기",
-  description: "최근 72시간 동안 가장 많은 추천을 받은 글.",
+  description: `최근 ${POPULAR_WINDOW_HOURS}시간 동안 가장 많은 추천을 받은 글.`,
 };
 
 export default async function PopularPage() {
   const supabase = await createClient();
-  const seventyTwoHoursAgo = hoursAgoIso(72);
-
-  const { data: posts } = await supabase
-    .from("posts")
-    .select(POST_LIST_SELECT)
-    .eq("status", "PUBLISHED")
-    .is("comments.deleted_at", null)
-    .gte("created_at", seventyTwoHoursAgo)
-    .order("like_count", { ascending: false })
-    .order("created_at", { ascending: false })
-    .returns<PostListRow[]>();
+  const { data: posts } = await fetchPopularPosts(supabase);
 
   return (
     <main className="flex flex-1 flex-col p-6">
@@ -34,7 +23,7 @@ export default async function PopularPage() {
         </div>
       ) : (
         <p className="text-sm text-muted">
-          최근 72시간 내 인기 글이 없습니다.
+          최근 {POPULAR_WINDOW_HOURS}시간 내 인기 글이 없습니다.
         </p>
       )}
     </main>

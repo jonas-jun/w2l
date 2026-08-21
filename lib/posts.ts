@@ -1,3 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { hoursAgoIso } from "@/lib/format";
+
 /** 목록(홈·인기)에서 쓰는 게시글 행. */
 export interface PostListRow {
   id: string;
@@ -19,6 +22,24 @@ export const POST_LIST_SELECT =
 /** 목록 카드에 표시할 댓글수. embedded aggregate는 배열로 온다. */
 export function commentCountOf(post: PostListRow): number {
   return post.comments[0]?.count ?? 0;
+}
+
+/** 인기 목록의 집계 구간. 홈 상단과 인기 탭이 같은 기준을 써야 한다. */
+export const POPULAR_WINDOW_HOURS = 72;
+
+/** 최근 {@link POPULAR_WINDOW_HOURS}시간의 공개 글을 추천순(동률이면 최신순)으로 조회한다. */
+export function fetchPopularPosts(supabase: SupabaseClient, limit?: number) {
+  let query = supabase
+    .from("posts")
+    .select(POST_LIST_SELECT)
+    .eq("status", "PUBLISHED")
+    .is("comments.deleted_at", null)
+    .gte("created_at", hoursAgoIso(POPULAR_WINDOW_HOURS))
+    .order("like_count", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (limit !== undefined) query = query.limit(limit);
+  return query.returns<PostListRow[]>();
 }
 
 /** 본문 저장 포맷. `posts.content_format` 의 값과 같다 (DATABASE.md §1.1). */

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
-import { hoursAgoIso } from "@/lib/format";
-import { POST_LIST_SELECT, type PostListRow } from "@/lib/posts";
+import { POST_LIST_SELECT, fetchPopularPosts, type PostListRow } from "@/lib/posts";
 
 const PAGE_SIZE = 20;
 
@@ -41,19 +40,9 @@ export default async function Home(props: PageProps<"/">) {
   const limit = Math.max(PAGE_SIZE, Number(searchParams.limit) || PAGE_SIZE);
 
   const supabase = await createClient();
-  const seventyTwoHoursAgo = hoursAgoIso(72);
 
   const [{ data: popularPosts }, { data: latestPosts }] = await Promise.all([
-    supabase
-      .from("posts")
-      .select(POST_LIST_SELECT)
-      .eq("status", "PUBLISHED")
-      .is("comments.deleted_at", null)
-      .gte("created_at", seventyTwoHoursAgo)
-      .order("like_count", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .returns<PostListRow[]>(),
+    fetchPopularPosts(supabase, 5),
     supabase
       .from("posts")
       .select(POST_LIST_SELECT)
