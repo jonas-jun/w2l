@@ -40,7 +40,9 @@ export default function Markdown({ content, previews }: MarkdownProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          p({ children, ...props }) {
+          // props 를 펼치지 않는다 — react-markdown 이 넘기는 AST 노드(node)가
+          // node="[object Object]" 로 DOM 에 새어 나간다. 문단에 필요한 속성은 없다.
+          p({ children }) {
             const url = standaloneUrlOf(children);
 
             // 단독 줄 이미지 URL은 두 모드가 같게 이미지로 렌더한다 — 평문 모드에서 넣은
@@ -56,7 +58,7 @@ export default function Markdown({ content, previews }: MarkdownProps) {
             const preview = normalized ? previews?.[normalized] : undefined;
 
             // 미리보기가 없는 URL은 손대지 않는다 — 일반 링크로 남는다.
-            if (!preview) return <p {...props}>{children}</p>;
+            if (!preview) return <p>{children}</p>;
 
             return <OgCard preview={preview} />;
           },
