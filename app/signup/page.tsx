@@ -75,7 +75,7 @@ export default function SignupPage() {
           minLength={6}
           className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
@@ -84,7 +84,7 @@ export default function SignupPage() {
           가입하기
         </button>
       </form>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         이미 계정이 있으신가요?{" "}
         <Link href="/login" className="underline">
           로그인

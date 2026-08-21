@@ -11,7 +11,7 @@ export default function AuthErrorNotice() {
   if (!failed) return null;
 
   return (
-    <p className="max-w-xs text-center text-sm text-red-600">
+    <p className="max-w-xs text-center text-sm text-danger">
       인증 링크가 만료되었거나 이미 사용되었습니다. 다시 로그인해주세요.
     </p>
   );

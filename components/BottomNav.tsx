@@ -14,7 +14,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-black/[.08] bg-[var(--background)] dark:border-white/[.145]">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-black/[.08] bg-background dark:border-white/[.145]">
       <div className="mx-auto flex max-w-[640px] items-stretch justify-around">
         {TABS.map(({ href, label }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -25,8 +25,8 @@ export default function BottomNav() {
               href={href}
               className={`flex flex-1 flex-col items-center justify-center gap-1 py-3 text-sm ${
                 active
-                  ? "font-semibold text-[var(--foreground)]"
-                  : "text-zinc-500 dark:text-zinc-400"
+                  ? "font-semibold text-strong"
+                  : "text-muted"
               }`}
               aria-current={active ? "page" : undefined}
             >

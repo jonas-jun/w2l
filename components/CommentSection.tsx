@@ -222,7 +222,7 @@ export default function CommentSection({
 
       <div>
         {threads.length === 0 ? (
-          <p className="py-2 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="py-2 text-sm text-muted">
             첫 댓글을 남겨보세요.
           </p>
         ) : (

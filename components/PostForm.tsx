@@ -271,7 +271,7 @@ export default function PostForm(props: PostFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-3">
       {restorable && (
-        <div className="flex flex-wrap items-center gap-2 rounded border border-amber-400 bg-amber-50 p-2 text-xs dark:bg-amber-950">
+        <div className="flex flex-wrap items-center gap-2 rounded border border-warn bg-warn-bg p-2 text-xs text-strong">
           <span className="flex-1">작성 중이던 임시본이 있습니다.</span>
           <button
             type="button"
@@ -310,14 +310,14 @@ export default function PostForm(props: PostFormProps) {
         <button
           type="button"
           onClick={() => setTab("write")}
-          className={tab === "write" ? "font-semibold underline" : "text-zinc-500"}
+          className={tab === "write" ? "font-semibold underline" : "text-muted"}
         >
           작성
         </button>
         <button
           type="button"
           onClick={() => setTab("preview")}
-          className={tab === "preview" ? "font-semibold underline" : "text-zinc-500"}
+          className={tab === "preview" ? "font-semibold underline" : "text-muted"}
         >
           미리보기
         </button>
@@ -347,14 +347,14 @@ export default function PostForm(props: PostFormProps) {
           {content.trim().length > 0 ? (
             <Markdown content={content} />
           ) : (
-            <p className="text-sm text-zinc-500">미리볼 내용이 없습니다.</p>
+            <p className="text-sm text-muted">미리볼 내용이 없습니다.</p>
           )}
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       {draftSavedAt && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-muted">
           임시본이 이 브라우저에 저장되었습니다.
         </p>
       )}

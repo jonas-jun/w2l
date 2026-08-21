@@ -37,7 +37,7 @@ export default function CommentItem({
   if (comment.deleted_at) {
     return (
       <div className={`border-b border-black/5 py-2 dark:border-white/5 ${indentClass}`}>
-        <p className="text-sm text-zinc-400">삭제된 댓글입니다.</p>
+        <p className="text-sm text-muted">삭제된 댓글입니다.</p>
       </div>
     );
   }
@@ -69,8 +69,8 @@ export default function CommentItem({
 
   return (
     <div className={`border-b border-black/5 py-2 dark:border-white/5 ${indentClass}`}>
-      <div className="flex flex-wrap gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+      <div className="flex flex-wrap gap-x-2 text-xs text-muted">
+        <span className="font-medium text-strong">
           {comment.profiles?.nickname ?? "알 수 없음"}
         </span>
         <span>{formatRelativeTime(comment.created_at)}</span>
@@ -113,7 +113,7 @@ export default function CommentItem({
             onClick={() => runPending(() => onToggleLike(comment.id, liked))}
             disabled={pending}
             className={`disabled:opacity-50 ${
-              liked ? "text-red-600" : "text-zinc-500 dark:text-zinc-400"
+              liked ? "text-danger" : "text-muted"
             }`}
           >
             추천 {comment.like_count}
@@ -121,7 +121,7 @@ export default function CommentItem({
           {!isReply && onReply && (
             <button
               onClick={() => setReplying((v) => !v)}
-              className="text-zinc-500 dark:text-zinc-400"
+              className="text-muted"
             >
               답글
             </button>
@@ -130,14 +130,14 @@ export default function CommentItem({
             <>
               <button
                 onClick={() => setEditing(true)}
-                className="text-zinc-500 dark:text-zinc-400"
+                className="text-muted"
               >
                 수정
               </button>
               <button
                 onClick={() => runPending(() => onDelete(comment.id))}
                 disabled={pending}
-                className="text-red-600 disabled:opacity-50"
+                className="text-danger disabled:opacity-50"
               >
                 삭제
               </button>

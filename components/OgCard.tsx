@@ -32,11 +32,11 @@ export default function OgCard({ preview }: { preview: LinkPreview }) {
           </p>
         )}
         {preview.og_description && (
-          <p className="line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="line-clamp-2 text-xs text-muted">
             {preview.og_description}
           </p>
         )}
-        <p className="truncate text-xs text-zinc-400">{hostname}</p>
+        <p className="truncate text-xs text-muted">{hostname}</p>
       </div>
     </a>
   );

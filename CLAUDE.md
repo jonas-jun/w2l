@@ -15,7 +15,7 @@
 ## 3. Workflow
 1. **Understand:** 관련 문서를 읽고 현재 구조 분석
 2. **Plan:** 필요한 DB/API/UI 변경사항 및 구현 계획 작성
-   * 현재 issue 기반으로 작업을 이해하고 계획을 세울 때는 `working/pr_{issue번호}_{workname}.md` 형식으로 계획서 파일을 작성한다. (예: `working/pr_10_accounts.md`) `working/`은 `.gitignore` 대상이라 커밋되지 않는다.
+   * 현재 issue 기반으로 작업을 이해하고 계획을 세울 때는 `working/issue-{issue번호}_{workname}.md` 형식으로 계획서 파일을 작성한다. (예: `working/issue-10_accounts.md`) `working/`은 `.gitignore` 대상이라 커밋되지 않는다.
 3. **Implement:** 작은 단위로 코드 작성
 4. **Test:** TypeScript, Lint, Build 통과 확인
 5. **Review & Commit:** 정상 동작 시 커밋

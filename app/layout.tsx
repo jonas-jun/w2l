@@ -34,6 +34,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   // 모바일에서 확대를 막지 않는다 (접근성).
   maximumScale: 5,
+  // 주소창까지 배경색과 맞춰야 화면 상단의 흰 띠가 남지 않는다 (issue #4).
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fdf6e3" },
+    { media: "(prefers-color-scheme: dark)", color: "#002b36" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

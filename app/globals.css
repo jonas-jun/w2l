@@ -1,21 +1,54 @@
 @import "tailwindcss";
 
+/* Solarized 팔레트 기반 (issue #4). 장시간 이용 시 눈 피로를 줄이려 배경 휘도를
+   순백(#fff) 대신 base3(#fdf6e3)로 낮춘다.
+   전경색은 Solarized 정본값을 그대로 쓰지 않는다 — base00(본문) 4.13:1,
+   base1(보조) 2.48:1 로 WCAG AA(4.5:1) 미달이기 때문이다. 색조(H·S)는 정본대로
+   두고 명도(L)만 조정해 4.5:1 이상을 맞춘 값을 쓴다. 주석의 비율은 해당 배경
+   위에서 실측한 대비다. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fdf6e3; /* base3 */
+  --foreground: #586e75; /* base01 — 배경 위 4.99:1 */
+  --strong: #073642; /* base02 — 배경 위 12.05:1 */
+  --muted: #5f747c; /* base00 보정 — 배경 위 4.55:1 */
+  --surface: #eee8d5; /* base2 — 코드 블록·카드 배경 */
+  --border: rgba(88, 110, 117, 0.25); /* base01 알파 */
+  --link: #2076b3; /* blue 보정 — 4.52:1 */
+  --danger: #cb2522; /* red 보정 — 배너 배경 위 4.53:1 */
+  --danger-bg: #fae6d5;
+  --warn: #886700; /* yellow 보정 — 배너 배경 위 4.51:1 */
+  --warn-bg: #f7edd1;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-strong: var(--strong);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-link: var(--link);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #002b36; /* base03 */
+    --foreground: #839496; /* base0 — 4.75:1 */
+    --strong: #93a1a1; /* base1 — 5.61:1 */
+    --muted: #7a9199; /* base00 보정 — 4.53:1 */
+    --surface: #073642; /* base02 */
+    --border: rgba(147, 161, 161, 0.28); /* base1 알파 */
+    --link: #2f93d9; /* 4.50:1 */
+    --danger: #e66a68; /* 배너 배경 위 4.55:1 */
+    --danger-bg: #1a2c35;
+    --warn: #bf9100; /* 배너 배경 위 4.53:1 */
+    --warn-bg: #163630;
   }
 }
 
@@ -62,11 +95,13 @@ body {
   margin: 0.5em 0;
 }
 .markdown-body a {
-  color: #2563eb;
+  color: var(--link);
   text-decoration: underline;
 }
+/* --surface 위에서는 --foreground(base01)가 4.39:1 로 미달이라 --strong 을 쓴다. */
 .markdown-body code {
-  background: rgba(127, 127, 127, 0.15);
+  background: var(--surface);
+  color: var(--strong);
   border-radius: 0.25em;
   padding: 0.1em 0.3em;
   font-family: var(--font-mono);
@@ -77,7 +112,7 @@ body {
   overflow-x: auto;
 }
 .markdown-body blockquote {
-  border-left: 3px solid rgba(127, 127, 127, 0.4);
+  border-left: 3px solid var(--border);
   padding-left: 0.75em;
-  color: rgba(127, 127, 127, 1);
+  color: var(--muted);
 }

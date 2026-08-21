@@ -17,7 +17,7 @@ export default function Error({
     <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
       <div>
         <p className="font-medium">문제가 발생했습니다.</p>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           잠시 후 다시 시도해주세요.
         </p>
       </div>
