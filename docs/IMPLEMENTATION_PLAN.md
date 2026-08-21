@@ -306,7 +306,9 @@ MVP 이후 개선. PRD 로드맵 Phase 2~4 기능이 아니다.
 
 ### T6.2 평문 렌더러 + 상세 화면 분기
 * **Scope:** `PlainText`(pre-wrap · 단독 줄 URL은 이미지/OG 카드 · 문장 속 URL은 링크),
-  분기 지점을 모은 `PostBody`. 상세 페이지의 `generateMetadata` description은 마크다운 글에만
+  분기 지점을 모은 `PostBody`. 단독 줄 이미지 URL·OG 카드 규칙은 두 모드가 공유한다 —
+  모드를 바꿔도 같은 본문이 같게 보여야 한다. 작성 미리보기도 캐시된 OG 미리보기를 읽어
+  상세 화면과 결과를 맞춘다(파서는 호출하지 않는다). 상세 페이지의 `generateMetadata` description은 마크다운 글에만
   기호 제거를 적용한다. 본문 스타일 클래스는 두 모드가 공유하므로 `.markdown-body` →
   `.post-body`로 이름을 바꿨다.
 * **Files:** `components/PlainText.tsx`, `components/PostBody.tsx`, `lib/posts.ts`,
@@ -359,8 +361,8 @@ MVP 이후 개선. PRD 로드맵 Phase 2~4 기능이 아니다.
 - [x] T5.1 UX 마감
 - [x] T5.2 프로덕션 인증 설정
 - [x] T5.3 배포
-- [ ] T6.1 마이그레이션: posts.content_format
-- [ ] T6.2 평문 렌더러 + 상세 화면 분기
-- [ ] T6.3 에디터 모드 토글
-- [ ] T6.4 평문 모드의 이미지·URL 처리
-- [ ] T6.5 문서 갱신
+- [x] T6.1 마이그레이션: posts.content_format
+- [x] T6.2 평문 렌더러 + 상세 화면 분기
+- [x] T6.3 에디터 모드 토글
+- [x] T6.4 평문 모드의 이미지·URL 처리
+- [x] T6.5 문서 갱신
