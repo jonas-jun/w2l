@@ -40,10 +40,13 @@
 ## 4. Key Technical Decisions
 * **인증 (MVP): 이메일 + 비밀번호 가입.** 소셜 로그인은 Supabase에서 추가 과금이 없지만(무료 티어 MAU 50,000, Google/Kakao OAuth API 무료), OAuth 앱 등록·심사 없이 시작할 수 있고 운영 계정 시딩(§5)이 쉬운 email 가입을 MVP로 택한다. 소셜 로그인은 Phase 2에서 추가 (Supabase는 두 방식을 병행 지원하므로 마이그레이션 부담 없음).
   * 확인 메일 발송: Supabase 내장 SMTP는 시간당 발송 제한이 있어 데모 수준이다. 정식 오픈 전에 커스텀 SMTP(예: Resend 무료 티어)를 연결한다.
-* **본문 포맷:** `posts.content`는 **Markdown**으로 저장한다. 이미지·URL은 마크다운 문법으로 본문에 삽입하고, 에디터는 툴바로 문법을 감춘다. AI 아카이빙(Phase 3)·SEO 변환이 쉬운 것이 선정 이유.
+* **본문 포맷:** `posts.content`는 **`posts.content_format`이 선언하는 포맷의 원문**으로 저장한다 (`MARKDOWN` | `PLAIN`, issue #5). 저장 시 이스케이프·변환을 하지 않으므로 편집 왕복에서 본문이 손실되지 않고, 렌더링만 이 값으로 분기한다(`components/PostBody.tsx`).
+  * **Markdown 모드:** 이미지·URL을 마크다운 문법으로 본문에 삽입하고, 에디터는 툴바로 문법을 감춘다. AI 아카이빙(Phase 3)·SEO 변환이 쉬운 것이 선정 이유.
+  * **Plain Text 모드:** 서식이 필요 없는 사용자를 위한 모드다. 단일 개행이 마크다운에서 접히는 문제(soft break)를 피하려 `white-space: pre-wrap`으로 그대로 렌더하고, 마크다운 문법은 해석하지 않는다. 이미지는 URL 단독 줄로 넣고 렌더러가 `<img>`로 그린다. 새 글의 기본 모드이며, 마지막에 고른 모드를 LocalStorage에 기억한다.
+  * **두 모드 공통:** 단독 줄 URL은 OG 카드로, 단독 줄 이미지 URL은 `<img>`로 렌더한다. 모드를 바꿔도 같은 본문이 같게 보여야 하기 때문이다(이미지 URL은 OG 파싱 대상에서 제외한다 — `lib/og.ts`의 `isImageUrl`). 단 마크다운에서 "단독 줄"은 문단 단위라, 앞 줄과 빈 줄로 떨어져 있지 않은 URL은 soft break로 합쳐져 카드가 되지 않는다.
 * **Editor & Auto Save:** content가 변경된 경우에만 LocalStorage에 5초 단위 debounce 임시저장 적용.
 * **Open Graph (OG) API:** SSRF 공격 방어를 위해 private IP, localhost 차단 및 redirect 제한이 적용된 별도 Python Microservice 운용.
-* **OG 캐시:** 파싱 결과는 `link_previews` 테이블에 URL 단위로 캐시한다 (`fetched_at` 기준 7일 경과 시 재파싱). 렌더링 시 Cloud Run을 직접 호출하지 않는다 — 작성 시점에 파싱·저장하고, 조회는 DB에서 읽는다.
+* **OG 캐시:** 파싱 결과는 `link_previews` 테이블에 URL 단위로 캐시한다 (`fetched_at` 기준 7일 경과 시 재파싱). 렌더링 시 Cloud Run을 직접 호출하지 않는다 — 작성 시점에 파싱·저장하고, 조회는 DB에서 읽는다. 작성 화면의 미리보기 탭도 같은 규칙이다(DB 캐시만 읽는다) — 그래서 한 번도 파싱된 적 없는 URL은 미리보기에서 일반 링크로 보이고, 등록 후 상세에서 카드가 된다.
 * **Real-time:** Supabase Realtime은 댓글 추가, 투표 결과 등 특정 요소에만 제한적으로 적용하여 비용/성능 최적화.
 
 ## 5. 운영 계정 시딩 (Seed Accounts)

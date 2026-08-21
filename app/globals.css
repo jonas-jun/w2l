@@ -58,60 +58,60 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3 {
+.post-body h1,
+.post-body h2,
+.post-body h3 {
   font-weight: 600;
   margin-top: 1em;
   margin-bottom: 0.5em;
 }
-.markdown-body h1 {
+.post-body h1 {
   font-size: 1.4em;
 }
-.markdown-body h2 {
+.post-body h2 {
   font-size: 1.2em;
 }
-.markdown-body h3 {
+.post-body h3 {
   font-size: 1.1em;
 }
-.markdown-body p {
+.post-body p {
   margin-bottom: 0.75em;
 }
-.markdown-body ul,
-.markdown-body ol {
+.post-body ul,
+.post-body ol {
   margin-bottom: 0.75em;
   padding-left: 1.5em;
 }
-.markdown-body ul {
+.post-body ul {
   list-style: disc;
 }
-.markdown-body ol {
+.post-body ol {
   list-style: decimal;
 }
-.markdown-body img {
+.post-body img {
   max-width: 100%;
   height: auto;
   border-radius: 0.25rem;
   margin: 0.5em 0;
 }
-.markdown-body a {
+.post-body a {
   color: var(--link);
   text-decoration: underline;
 }
 /* --surface 위에서는 --foreground(base01)가 4.39:1 로 미달이라 --strong 을 쓴다. */
-.markdown-body code {
+.post-body code {
   background: var(--surface);
   color: var(--strong);
   border-radius: 0.25em;
   padding: 0.1em 0.3em;
   font-family: var(--font-mono);
 }
-.markdown-body pre code {
+.post-body pre code {
   display: block;
   padding: 0.75em;
   overflow-x: auto;
 }
-.markdown-body blockquote {
+.post-body blockquote {
   border-left: 3px solid var(--border);
   padding-left: 0.75em;
   color: var(--muted);

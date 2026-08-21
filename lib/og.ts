@@ -42,6 +42,21 @@ export function normalizeUrl(raw: string): string | null {
 }
 
 /**
+ * Storage 에 올린 이미지는 항상 확장자로 끝나는 경로다 (ImageUploadButton).
+ * 확장자만으로 이미지 URL 을 판정한다 — HEAD 요청 같은 왕복 없이 충분하다.
+ */
+const IMAGE_PATH_PATTERN = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
+
+/** URL 이 이미지를 가리키는가. 평문 본문의 이미지 줄 판정과 OG 파싱 제외에 함께 쓴다. */
+export function isImageUrl(raw: string): boolean {
+  try {
+    return IMAGE_PATH_PATTERN.test(new URL(raw).pathname);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 본문에서 "단독 줄 URL"만 뽑는다. 문장 중간의 링크나 마크다운 링크는 대상이 아니다
  * (ARCHITECTURE.md §4 — 작성 시점에만 파싱한다).
  */
@@ -51,6 +66,9 @@ export function extractStandaloneUrls(content: string): string[] {
   for (const rawLine of content.split("\n")) {
     const line = rawLine.trim();
     if (!/^https?:\/\/\S+$/.test(line)) continue;
+    // 이미지 URL 은 OG 대상이 아니다. 평문 모드는 이미지를 URL 단독 줄로 넣으므로
+    // 걸러 두지 않으면 업로드마다 파서를 헛호출한다.
+    if (isImageUrl(line)) continue;
 
     const normalized = normalizeUrl(line);
     if (normalized) urls.add(normalized);

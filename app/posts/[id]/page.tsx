@@ -3,17 +3,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import Markdown from "@/components/Markdown";
+import PostBody from "@/components/PostBody";
 import LikeButton from "@/components/LikeButton";
 import DeletePostButton from "@/components/DeletePostButton";
 import CommentSection, { type CommentNode } from "@/components/CommentSection";
 import { formatRelativeTime } from "@/lib/format";
+import { toContentFormat } from "@/lib/posts";
 import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
 
 interface PostDetail {
   id: string;
   title: string;
   content: string;
+  content_format: string;
   status: string;
   author_id: string;
   created_at: string;
@@ -31,7 +33,7 @@ const getPost = cache(async (id: string) => {
   const { data } = await supabase
     .from("posts")
     .select(
-      "id, title, content, status, author_id, created_at, view_count, like_count, profiles(nickname)",
+      "id, title, content, content_format, status, author_id, created_at, view_count, like_count, profiles(nickname)",
     )
     .eq("id", id)
     .maybeSingle<PostDetail>();
@@ -48,12 +50,13 @@ export async function generateMetadata(
     return { title: "찾을 수 없는 글" };
   }
 
-  // 본문 앞부분을 설명으로 쓴다 (마크다운 기호는 대충 걷어낸다).
-  const description = post.content
-    .replace(/[#*`>[\]()!_-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120);
+  // 본문 앞부분을 설명으로 쓴다. 마크다운 기호 제거는 마크다운 글에만 한다 —
+  // 평문 글에서는 그 기호가 사용자가 실제로 쓴 문자다.
+  const body =
+    toContentFormat(post.content_format) === "MARKDOWN"
+      ? post.content.replace(/[#*`>[\]()!_-]/g, " ")
+      : post.content;
+  const description = body.replace(/\s+/g, " ").trim().slice(0, 120);
 
   return {
     title: post.title,
@@ -156,7 +159,11 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
         </div>
       </div>
 
-      <Markdown content={post.content} previews={previews} />
+      <PostBody
+        content={post.content}
+        format={toContentFormat(post.content_format)}
+        previews={previews}
+      />
 
       <div className="flex items-center gap-3">
         <LikeButton

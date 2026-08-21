@@ -12,9 +12,10 @@ import {
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import MarkdownToolbar, { insertAtCursor } from "@/components/MarkdownToolbar";
-import Markdown from "@/components/Markdown";
+import PostBody from "@/components/PostBody";
 import ImageUploadButton, { type UploadedImage } from "@/components/ImageUploadButton";
-import { extractStandaloneUrls } from "@/lib/og";
+import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
+import { DEFAULT_CONTENT_FORMAT, type ContentFormat } from "@/lib/posts";
 
 type PostFormProps =
   | { mode: "create"; boardId: string }
@@ -23,16 +24,26 @@ type PostFormProps =
       postId: string;
       initialTitle: string;
       initialContent: string;
+      initialFormat: ContentFormat;
       initialStatus: string;
     };
 
 interface DraftSnapshot {
   title: string;
   content: string;
+  /** 컬럼이 없던 시절의 임시본에는 없다 — 복원 시 현재 모드를 유지한다. */
+  format?: ContentFormat;
   savedAt: string;
 }
 
 const AUTOSAVE_DELAY_MS = 5000;
+/** 마지막에 고른 작성 모드. 같은 사람은 대체로 같은 모드로 계속 쓴다. */
+const FORMAT_STORAGE_KEY = "w2l:content-format";
+
+const FORMAT_OPTIONS: { value: ContentFormat; label: string }[] = [
+  { value: "PLAIN", label: "일반 텍스트" },
+  { value: "MARKDOWN", label: "마크다운" },
+];
 
 function draftStorageKey(props: PostFormProps): string {
   return props.mode === "create" ? "w2l:draft:new" : `w2l:draft:${props.postId}`;
@@ -41,7 +52,16 @@ function draftStorageKey(props: PostFormProps): string {
 // LocalStorage는 React 외부 저장소다. 마운트 시점에 한 번만 읽으면 되므로 구독은 비워 둔다.
 const subscribeToNothing = () => () => {};
 // 서버 렌더에는 LocalStorage가 없다 — 하이드레이션 후 클라이언트 값으로 교체된다.
-const getServerDraftSnapshot = () => null;
+const getNullServerSnapshot = () => null;
+
+// 마지막에 고른 모드도 React 외부 저장소에서 읽는다 — 키가 고정이라 콜백을 모듈에 둔다.
+const getStoredFormat = () => {
+  try {
+    return window.localStorage.getItem(FORMAT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
 
 export default function PostForm(props: PostFormProps) {
   const router = useRouter();
@@ -51,7 +71,13 @@ export default function PostForm(props: PostFormProps) {
 
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
+  // 이번 화면에서 고른 모드. null이면 저장된 마지막 모드(없으면 기본값)를 따른다.
+  const [formatChoice, setFormatChoice] = useState<ContentFormat | null>(
+    props.mode === "edit" ? props.initialFormat : null,
+  );
+  const [showFormatNotice, setShowFormatNotice] = useState(false);
   const [tab, setTab] = useState<"write" | "preview">("write");
+  const [previews, setPreviews] = useState<Record<string, LinkPreview>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -74,8 +100,20 @@ export default function PostForm(props: PostFormProps) {
   const rawDraft = useSyncExternalStore(
     subscribeToNothing,
     getDraftSnapshot,
-    getServerDraftSnapshot,
+    getNullServerSnapshot,
   );
+
+  const storedFormat = useSyncExternalStore(
+    subscribeToNothing,
+    getStoredFormat,
+    getNullServerSnapshot,
+  );
+
+  const format: ContentFormat =
+    formatChoice ??
+    (storedFormat === "PLAIN" || storedFormat === "MARKDOWN"
+      ? storedFormat
+      : DEFAULT_CONTENT_FORMAT);
 
   // 저장된 임시본이 현재 내용과 다를 때만 복원 배너를 띄운다.
   const restorable = useMemo<DraftSnapshot | null>(() => {
@@ -91,6 +129,38 @@ export default function PostForm(props: PostFormProps) {
     return null;
   }, [rawDraft, draftDismissed, initialContent, initialTitle]);
 
+  /**
+   * 미리보기 탭은 상세 화면과 같은 결과를 보여야 한다 — 캐시된 OG 미리보기를 읽어 온다.
+   * 파서는 호출하지 않는다 (ARCHITECTURE.md §4 — 조회 시 파서 호출 금지). 그래서 아직 한 번도
+   * 파싱된 적 없는 URL은 미리보기에서 링크로 보이고, 등록 후 상세에서 카드가 된다.
+   */
+  useEffect(() => {
+    if (tab !== "preview") return;
+
+    const urls = extractStandaloneUrls(content);
+    if (urls.length === 0) return;
+
+    let ignore = false;
+    createClient()
+      .from("link_previews")
+      .select("url, og_title, og_description, og_image_url")
+      .in("url", urls)
+      .returns<LinkPreview[]>()
+      .then(({ data }) => {
+        if (ignore || !data || data.length === 0) return;
+        setPreviews((prev) => {
+          const next = { ...prev };
+          for (const row of data) next[row.url] = row;
+          return next;
+        });
+      });
+
+    // 탭을 벗어나거나 본문이 바뀌면 뒤늦게 온 응답은 버린다.
+    return () => {
+      ignore = true;
+    };
+  }, [tab, content]);
+
   // 자동저장: content가 변경된 경우에만 5초 debounce (ARCHITECTURE.md §4).
   useEffect(() => {
     if (content === initialContent) return;
@@ -99,6 +169,7 @@ export default function PostForm(props: PostFormProps) {
       const snapshot: DraftSnapshot = {
         title,
         content,
+        format,
         savedAt: new Date().toISOString(),
       };
       try {
@@ -111,8 +182,29 @@ export default function PostForm(props: PostFormProps) {
 
     return () => clearTimeout(timer);
     // title은 의존성에 넣지 않는다 — content 변경만 자동저장을 트리거한다.
+    // format은 넣는다 — 모드가 바뀐 뒤의 임시본은 그 모드로 복원돼야 한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, storageKey, initialContent]);
+  }, [content, format, storageKey, initialContent]);
+
+  /**
+   * 모드 전환은 본문을 변환하지 않는다 — 저장 포맷이 원문이라 왕복에서 글이 손실되지 않는다.
+   * 대신 평문 -> 마크다운은 이미 써둔 기호가 서식으로 해석될 수 있어 한 번 알려준다.
+   */
+  function changeFormat(next: ContentFormat) {
+    if (next === format) return;
+
+    setShowFormatNotice(next === "MARKDOWN" && content.trim().length > 0);
+    setFormatChoice(next);
+
+    // 기존 글 편집은 그 글의 포맷을 바꾸는 것이므로 기본값으로 기억하지 않는다.
+    if (props.mode === "create") {
+      try {
+        window.localStorage.setItem(FORMAT_STORAGE_KEY, next);
+      } catch {
+        // 무시 — 기억하지 못할 뿐이다.
+      }
+    }
+  }
 
   /**
    * 본문의 단독 줄 URL을 작성 시점에 파싱해 캐시에 채운다 (ARCHITECTURE.md §4).
@@ -153,11 +245,16 @@ export default function PostForm(props: PostFormProps) {
   }
 
   async function handleImageUploaded(image: UploadedImage) {
+    // 평문 모드에는 마크다운 문법을 넣지 않는다 — URL이 자기 줄을 차지하면
+    // PlainText가 이미지로 렌더한다. 그래서 앞뒤 개행까지 함께 넣는다.
+    const snippet =
+      format === "PLAIN" ? `\n${image.publicUrl}\n` : `![](${image.publicUrl})`;
+
     const textarea = textareaRef.current;
     if (textarea) {
-      setContent(insertAtCursor(textarea, `![](${image.publicUrl})`));
+      setContent(insertAtCursor(textarea, snippet));
     } else {
-      setContent((prev) => `${prev}\n![](${image.publicUrl})\n`);
+      setContent((prev) => `${prev}\n${snippet.trim()}\n`);
     }
 
     if (props.mode === "edit") {
@@ -186,7 +283,13 @@ export default function PostForm(props: PostFormProps) {
     if (props.mode === "create") {
       const { data, error: insertError } = await supabase
         .from("posts")
-        .insert({ board_id: props.boardId, title, content, status: "PUBLISHED" })
+        .insert({
+          board_id: props.boardId,
+          title,
+          content,
+          content_format: format,
+          status: "PUBLISHED",
+        })
         .select("id")
         .single();
 
@@ -207,7 +310,7 @@ export default function PostForm(props: PostFormProps) {
     // DRAFT를 수정 후 등록하면 그대로 공개된다.
     const { error: updateError } = await supabase
       .from("posts")
-      .update({ title, content, status: "PUBLISHED" })
+      .update({ title, content, content_format: format, status: "PUBLISHED" })
       .eq("id", props.postId);
 
     setSubmitting(false);
@@ -231,7 +334,13 @@ export default function PostForm(props: PostFormProps) {
     if (props.mode === "create") {
       const { data, error: insertError } = await supabase
         .from("posts")
-        .insert({ board_id: props.boardId, title, content, status: "DRAFT" })
+        .insert({
+          board_id: props.boardId,
+          title,
+          content,
+          content_format: format,
+          status: "DRAFT",
+        })
         .select("id")
         .single();
 
@@ -251,7 +360,7 @@ export default function PostForm(props: PostFormProps) {
 
     const { error: updateError } = await supabase
       .from("posts")
-      .update({ title, content, status: "DRAFT" })
+      .update({ title, content, content_format: format, status: "DRAFT" })
       .eq("id", props.postId);
 
     setSavingDraft(false);
@@ -278,6 +387,10 @@ export default function PostForm(props: PostFormProps) {
             onClick={() => {
               setTitle(restorable.title);
               setContent(restorable.content);
+              // format이 없거나 알 수 없는 값인 임시본은 현재 모드를 유지한다.
+              if (restorable.format === "PLAIN" || restorable.format === "MARKDOWN") {
+                setFormatChoice(restorable.format);
+              }
               setDraftDismissed(true);
             }}
             className="rounded bg-foreground px-2 py-1 text-background"
@@ -321,31 +434,67 @@ export default function PostForm(props: PostFormProps) {
         >
           미리보기
         </button>
+
+        <div className="ml-auto flex overflow-hidden rounded border border-black/20 text-xs dark:border-white/20">
+          {FORMAT_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => changeFormat(option.value)}
+              aria-pressed={format === option.value}
+              className={
+                format === option.value
+                  ? "bg-foreground px-2 py-1 text-background"
+                  : "px-2 py-1 text-muted"
+              }
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {showFormatNotice && (
+        <p className="rounded border border-warn bg-warn-bg px-2 py-1 text-xs text-strong">
+          줄바꿈이 한 문단으로 합쳐지고, 이미 쓴 기호(*, #, _ 등)가 서식으로 해석될 수
+          있습니다. 미리보기로 확인해주세요.
+        </p>
+      )}
 
       {tab === "write" ? (
         <>
-          <MarkdownToolbar
-            textareaRef={textareaRef}
-            onChange={setContent}
-            imageSlot={
+          {format === "MARKDOWN" ? (
+            <MarkdownToolbar
+              textareaRef={textareaRef}
+              onChange={setContent}
+              imageSlot={
+                <ImageUploadButton onUploaded={handleImageUploaded} onError={setError} />
+              }
+            />
+          ) : (
+            // 평문 모드에는 문법 버튼이 필요 없다 — 이미지 첨부만 남긴다.
+            <div className="flex flex-wrap items-center gap-1">
               <ImageUploadButton onUploaded={handleImageUploaded} onError={setError} />
-            }
-          />
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="내용을 마크다운으로 입력하세요"
+            placeholder={
+              format === "PLAIN" ? "내용을 입력하세요" : "내용을 마크다운으로 입력하세요"
+            }
             required
             rows={16}
-            className="flex-1 resize-none rounded border border-black/20 px-3 py-2 font-mono text-sm dark:border-white/20"
+            className={`flex-1 resize-none rounded border border-black/20 px-3 py-2 text-sm dark:border-white/20 ${
+              format === "MARKDOWN" ? "font-mono" : ""
+            }`}
           />
         </>
       ) : (
         <div className="min-h-64 flex-1 overflow-y-auto rounded border border-black/20 px-3 py-2 dark:border-white/20">
           {content.trim().length > 0 ? (
-            <Markdown content={content} />
+            <PostBody content={content} format={format} previews={previews} />
           ) : (
             <p className="text-sm text-muted">미리볼 내용이 없습니다.</p>
           )}
