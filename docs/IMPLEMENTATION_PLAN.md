@@ -295,6 +295,45 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 * **Acceptance Criteria:** 프로덕션 URL에서 T5.1의 플로우 완주. 운영 계정(T1.3)으로
   글 작성 가능.
 
+
+## Step 6 — 본문 포맷 선택 (issue #5)
+MVP 이후 개선. PRD 로드맵 Phase 2~4 기능이 아니다.
+
+### T6.1 마이그레이션: `posts.content_format`
+* **Scope:** `MARKDOWN` | `PLAIN` CHECK 제약, default `'MARKDOWN'`(기존 글 백필 = 현행 렌더 유지).
+  RLS 정책·GRANT 변경 없음 — 둘 다 테이블 단위다.
+* **Acceptance Criteria:** `supabase db push` 성공. 허용값 밖의 INSERT는 CHECK로 거부.
+
+### T6.2 평문 렌더러 + 상세 화면 분기
+* **Scope:** `PlainText`(pre-wrap · 단독 줄 URL은 이미지/OG 카드 · 문장 속 URL은 링크),
+  분기 지점을 모은 `PostBody`. 상세 페이지의 `generateMetadata` description은 마크다운 글에만
+  기호 제거를 적용한다. 본문 스타일 클래스는 두 모드가 공유하므로 `.markdown-body` →
+  `.post-body`로 이름을 바꿨다.
+* **Files:** `components/PlainText.tsx`, `components/PostBody.tsx`, `lib/posts.ts`,
+  `app/posts/[id]/page.tsx`, `app/globals.css`, `components/Markdown.tsx`
+* **Acceptance Criteria:** 평문 글에서 연속 개행이 보존되고 `**굵게**`가 문자 그대로 보이며
+  단독 줄 URL이 OG 카드로 보인다. 기존 마크다운 글의 렌더 결과는 그대로다.
+
+### T6.3 에디터 모드 토글
+* **Scope:** 작성/미리보기 탭 줄에 "일반 텍스트 | 마크다운" 토글. 평문 모드는 문법 툴바를 감추고
+  이미지 버튼만 남긴다. 전환 시 본문은 변환하지 않으며, 평문 → 마크다운 전환에는 기호가 서식으로
+  해석될 수 있다는 안내를 노출한다. 새 글은 마지막에 고른 모드로 시작(LocalStorage), 기존 글은
+  DB 값으로 시작한다. 임시본 스냅샷에도 모드를 담는다.
+* **Files:** `components/PostForm.tsx`, `app/write/[id]/page.tsx`
+* **Acceptance Criteria:** 평문으로 쓴 글을 수정 화면에서 열면 토글과 본문이 그대로다.
+  임시저장 → 재진입 시 모드가 유지된다. 375px에서 토글이 한 줄에 들어간다.
+
+### T6.4 평문 모드의 이미지·URL 처리
+* **Scope:** 평문 모드 이미지 삽입은 마크다운 문법 대신 URL 단독 줄. `isImageUrl`로 이미지 URL을
+  OG 파싱 대상에서 제외한다(평문 모드에서 새로 생기는 헛호출 방지).
+* **Files:** `components/PostForm.tsx`, `components/PlainText.tsx`, `lib/og.ts`
+* **Acceptance Criteria:** 평문 모드 이미지 업로드 시 본문에 URL만 들어가고 상세에서 이미지로
+  보인다. `post_images` 행이 기록되고, 업로드로 `/api/og`가 호출되지 않는다.
+
+### T6.5 문서 갱신
+* **Scope:** ARCHITECTURE §4 본문 포맷, PRD §4.1 게시글, DATABASE §1.1 Fields, 이 문서.
+* **Acceptance Criteria:** "본문은 Markdown으로 저장한다"는 단정이 문서에 남지 않는다.
+
 ---
 
 ## 진행 체크리스트
@@ -320,3 +359,8 @@ og-parser/              # Step 4의 Python 서비스 (별도 배포 단위)
 - [x] T5.1 UX 마감
 - [x] T5.2 프로덕션 인증 설정
 - [x] T5.3 배포
+- [ ] T6.1 마이그레이션: posts.content_format
+- [ ] T6.2 평문 렌더러 + 상세 화면 분기
+- [ ] T6.3 에디터 모드 토글
+- [ ] T6.4 평문 모드의 이미지·URL 처리
+- [ ] T6.5 문서 갱신

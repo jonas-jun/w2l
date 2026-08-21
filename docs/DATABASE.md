@@ -8,7 +8,7 @@ MVP는 게시판 1개(자유게시판)로 시작하지만, Phase 2에서 A vs B 
 
 ### 1.1 Post Model (`posts`)
 일반 게시글과 대결(Poll) 게시글을 하나의 모델로 관리.
-* **Fields:** `id`, `board_id`, `author_id`, `title`, `content`, `post_type` (NORMAL/POLL — POLL은 Phase 2), `status` (DRAFT/PUBLISHED/DELETED), `view_count`, `like_count` (트리거 갱신 캐시), `created_at`, `updated_at`, `deleted_at`
+* **Fields:** `id`, `board_id`, `author_id`, `title`, `content`, `content_format` (MARKDOWN/PLAIN — `content`를 어떤 포맷의 원문으로 저장했는지, default MARKDOWN), `post_type` (NORMAL/POLL — POLL은 Phase 2), `status` (DRAFT/PUBLISHED/DELETED), `view_count`, `like_count` (트리거 갱신 캐시), `created_at`, `updated_at`, `deleted_at`
 * **Invariant:** `status = DELETED ⇔ deleted_at IS NOT NULL` (둘은 항상 함께 세팅한다)
 
 ### 1.2 Poll Model (이벤트 테이블 구조) — **Phase 2, MVP에서는 테이블을 생성하지 않는다**
