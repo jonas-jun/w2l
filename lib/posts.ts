@@ -51,10 +51,15 @@ export type ContentFormat = "MARKDOWN" | "PLAIN";
  */
 export const DEFAULT_CONTENT_FORMAT: ContentFormat = "PLAIN";
 
+/** LocalStorage 등 외부에서 읽은 값이 ContentFormat 인지 좁힌다. */
+export function isContentFormat(value: unknown): value is ContentFormat {
+  return value === "PLAIN" || value === "MARKDOWN";
+}
+
 /**
  * DB에서 읽은 값을 ContentFormat 으로 좁힌다. 알 수 없는 값은 Markdown 으로 폴백한다 —
  * content_format 컬럼이 없던 시절 글의 렌더 동작과 같아야 한다.
  */
 export function toContentFormat(value: unknown): ContentFormat {
-  return value === "PLAIN" ? "PLAIN" : "MARKDOWN";
+  return isContentFormat(value) ? value : "MARKDOWN";
 }

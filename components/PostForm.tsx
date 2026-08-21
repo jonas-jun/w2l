@@ -20,7 +20,11 @@ import {
   toPreviewMap,
   type LinkPreview,
 } from "@/lib/og";
-import { DEFAULT_CONTENT_FORMAT, type ContentFormat } from "@/lib/posts";
+import {
+  DEFAULT_CONTENT_FORMAT,
+  isContentFormat,
+  type ContentFormat,
+} from "@/lib/posts";
 
 type PostFormProps =
   | { mode: "create"; boardId: string }
@@ -115,10 +119,7 @@ export default function PostForm(props: PostFormProps) {
   );
 
   const format: ContentFormat =
-    formatChoice ??
-    (storedFormat === "PLAIN" || storedFormat === "MARKDOWN"
-      ? storedFormat
-      : DEFAULT_CONTENT_FORMAT);
+    formatChoice ?? (isContentFormat(storedFormat) ? storedFormat : DEFAULT_CONTENT_FORMAT);
 
   // 저장된 임시본이 현재 내용과 다를 때만 복원 배너를 띄운다.
   const restorable = useMemo<DraftSnapshot | null>(() => {
@@ -389,7 +390,7 @@ export default function PostForm(props: PostFormProps) {
               setTitle(restorable.title);
               setContent(restorable.content);
               // format이 없거나 알 수 없는 값인 임시본은 현재 모드를 유지한다.
-              if (restorable.format === "PLAIN" || restorable.format === "MARKDOWN") {
+              if (isContentFormat(restorable.format)) {
                 setFormatChoice(restorable.format);
               }
               setDraftDismissed(true);
