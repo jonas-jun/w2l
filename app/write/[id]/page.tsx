@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PostForm from "@/components/PostForm";
+import { toContentFormat } from "@/lib/posts";
 
 export default async function EditPostPage(props: PageProps<"/write/[id]">) {
   const { id } = await props.params;
@@ -15,7 +16,7 @@ export default async function EditPostPage(props: PageProps<"/write/[id]">) {
 
   const { data: post } = await supabase
     .from("posts")
-    .select("id, title, content, author_id, status")
+    .select("id, title, content, content_format, author_id, status")
     .eq("id", id)
     .maybeSingle();
 
@@ -38,6 +39,7 @@ export default async function EditPostPage(props: PageProps<"/write/[id]">) {
         postId={post.id}
         initialTitle={post.title}
         initialContent={post.content}
+        initialFormat={toContentFormat(post.content_format)}
         initialStatus={post.status}
       />
     </main>
