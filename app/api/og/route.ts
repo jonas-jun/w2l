@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizeUrl, type LinkPreview } from "@/lib/og";
+import { LINK_PREVIEW_SELECT, normalizeUrl, type LinkPreview } from "@/lib/og";
 
 const CACHE_TTL_DAYS = 7;
 const PARSER_TIMEOUT_MS = 8000;
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   // 1) 캐시 조회 — 7일 이내면 파서를 호출하지 않는다 (ARCHITECTURE.md §4).
   const { data: cached } = await supabase
     .from("link_previews")
-    .select("url, og_title, og_description, og_image_url, fetched_at")
+    .select(`${LINK_PREVIEW_SELECT}, fetched_at`)
     .eq("url", url)
     .maybeSingle();
 
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       },
       { onConflict: "url" },
     )
-    .select("url, og_title, og_description, og_image_url")
+    .select(LINK_PREVIEW_SELECT)
     .single();
 
   if (upsertError || !saved) {

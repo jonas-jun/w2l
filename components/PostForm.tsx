@@ -14,7 +14,12 @@ import { createClient } from "@/lib/supabase/client";
 import MarkdownToolbar, { insertAtCursor } from "@/components/MarkdownToolbar";
 import PostBody from "@/components/PostBody";
 import ImageUploadButton, { type UploadedImage } from "@/components/ImageUploadButton";
-import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
+import {
+  LINK_PREVIEW_SELECT,
+  extractStandaloneUrls,
+  toPreviewMap,
+  type LinkPreview,
+} from "@/lib/og";
 import { DEFAULT_CONTENT_FORMAT, type ContentFormat } from "@/lib/posts";
 
 type PostFormProps =
@@ -143,16 +148,12 @@ export default function PostForm(props: PostFormProps) {
     let ignore = false;
     createClient()
       .from("link_previews")
-      .select("url, og_title, og_description, og_image_url")
+      .select(LINK_PREVIEW_SELECT)
       .in("url", urls)
       .returns<LinkPreview[]>()
       .then(({ data }) => {
         if (ignore || !data || data.length === 0) return;
-        setPreviews((prev) => {
-          const next = { ...prev };
-          for (const row of data) next[row.url] = row;
-          return next;
-        });
+        setPreviews((prev) => ({ ...prev, ...toPreviewMap(data) }));
       });
 
     // 탭을 벗어나거나 본문이 바뀌면 뒤늦게 온 응답은 버린다.

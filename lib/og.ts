@@ -83,3 +83,15 @@ export interface LinkPreview {
   og_description: string | null;
   og_image_url: string | null;
 }
+
+/** link_previews 조회용 select. LinkPreview 인터페이스와 모양이 같아야 한다. */
+export const LINK_PREVIEW_SELECT = "url, og_title, og_description, og_image_url";
+
+/** 조회한 미리보기 행들을 "정규화된 URL -> 미리보기" 맵으로 만든다. */
+export function toPreviewMap(
+  rows: LinkPreview[] | null | undefined,
+): Record<string, LinkPreview> {
+  const previews: Record<string, LinkPreview> = {};
+  for (const row of rows ?? []) previews[row.url] = row;
+  return previews;
+}

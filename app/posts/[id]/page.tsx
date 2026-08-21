@@ -10,7 +10,12 @@ import CommentSection from "@/components/CommentSection";
 import { COMMENT_SELECT, type CommentNode } from "@/lib/comments";
 import { formatRelativeTime } from "@/lib/format";
 import { toContentFormat } from "@/lib/posts";
-import { extractStandaloneUrls, type LinkPreview } from "@/lib/og";
+import {
+  LINK_PREVIEW_SELECT,
+  extractStandaloneUrls,
+  toPreviewMap,
+  type LinkPreview,
+} from "@/lib/og";
 
 interface PostDetail {
   id: string;
@@ -111,7 +116,7 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
     standaloneUrls.length > 0
       ? supabase
           .from("link_previews")
-          .select("url, og_title, og_description, og_image_url")
+          .select(LINK_PREVIEW_SELECT)
           .in("url", standaloneUrls)
           .returns<LinkPreview[]>()
       : null,
@@ -124,12 +129,7 @@ export default async function PostDetailPage(props: PageProps<"/posts/[id]">) {
   ]);
 
   const initialLiked = Boolean(likeRowResult?.data);
-
-  const previews: Record<string, LinkPreview> = {};
-  for (const row of previewResult?.data ?? []) {
-    previews[row.url] = row;
-  }
-
+  const previews = toPreviewMap(previewResult?.data);
   const comments = commentsResult.data;
 
   let likedCommentIds: string[] = [];
