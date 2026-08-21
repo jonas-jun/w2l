@@ -7,7 +7,7 @@ export default function Spinner({ label = "불러오는 중" }: { label?: string
     >
       <span
         aria-hidden
-        className="size-6 animate-spin rounded-full border-2 border-black/15 border-t-black/60 dark:border-white/15 dark:border-t-white/60"
+        className="size-6 animate-spin rounded-full border-2 border-border/60 border-t-muted"
       />
       <span className="sr-only">{label}</span>
     </div>

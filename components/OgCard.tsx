@@ -13,7 +13,7 @@ export default function OgCard({ preview }: { preview: LinkPreview }) {
       href={preview.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="my-2 flex overflow-hidden rounded border border-black/15 no-underline dark:border-white/15"
+      className="my-2 flex overflow-hidden rounded border border-border/60 no-underline"
     >
       {preview.og_image_url && (
         // 외부 도메인 이미지라 next/image 대신 img를 쓴다 (도메인 화이트리스트 불필요).
@@ -27,7 +27,7 @@ export default function OgCard({ preview }: { preview: LinkPreview }) {
       )}
       <div className="flex min-w-0 flex-col justify-center gap-1 p-3">
         {preview.og_title && (
-          <p className="line-clamp-2 text-sm font-medium text-[var(--foreground)]">
+          <p className="line-clamp-2 text-sm font-medium text-foreground">
             {preview.og_title}
           </p>
         )}

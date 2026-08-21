@@ -202,7 +202,7 @@ export default function CommentSection({
   }
 
   return (
-    <section className="flex flex-col gap-2 border-t border-black/10 pt-4 dark:border-white/10">
+    <section className="flex flex-col gap-2 border-t border-border/40 pt-4">
       <h2 className="text-sm font-semibold">댓글 {visibleCount}</h2>
 
       <div>
@@ -246,7 +246,7 @@ export default function CommentSection({
           onChange={(e) => setNewContent(e.target.value)}
           rows={3}
           placeholder={currentUserId ? "댓글을 입력하세요" : "로그인 후 댓글을 남길 수 있습니다"}
-          className="rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+          className="rounded border border-border px-2 py-1 text-sm"
         />
         <button
           onClick={handleSubmitNew}

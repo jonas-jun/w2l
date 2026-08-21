@@ -58,7 +58,7 @@ export default function MarkdownToolbar({
   }
 
   const buttonClass =
-    "rounded border border-black/20 px-2 py-1 text-xs dark:border-white/20";
+    "rounded border border-border px-2 py-1 text-xs";
 
   return (
     <div className="flex flex-wrap items-center gap-1">

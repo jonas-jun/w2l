@@ -375,7 +375,7 @@ export default function PostForm(props: PostFormProps) {
               clearDraft();
               setDraftDismissed(true);
             }}
-            className="rounded border border-black/20 px-2 py-1 dark:border-white/20"
+            className="rounded border border-border px-2 py-1"
           >
             삭제
           </button>
@@ -388,7 +388,7 @@ export default function PostForm(props: PostFormProps) {
         placeholder="제목"
         required
         maxLength={200}
-        className="rounded border border-black/20 px-3 py-2 dark:border-white/20"
+        className="rounded border border-border px-3 py-2"
       />
 
       <div className="flex items-center gap-2 text-sm">
@@ -407,7 +407,7 @@ export default function PostForm(props: PostFormProps) {
           미리보기
         </button>
 
-        <div className="ml-auto flex overflow-hidden rounded border border-black/20 text-xs dark:border-white/20">
+        <div className="ml-auto flex overflow-hidden rounded border border-border text-xs">
           {FORMAT_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -458,13 +458,13 @@ export default function PostForm(props: PostFormProps) {
             }
             required
             rows={16}
-            className={`flex-1 resize-none rounded border border-black/20 px-3 py-2 text-sm dark:border-white/20 ${
+            className={`flex-1 resize-none rounded border border-border px-3 py-2 text-sm ${
               format === "MARKDOWN" ? "font-mono" : ""
             }`}
           />
         </>
       ) : (
-        <div className="min-h-64 flex-1 overflow-y-auto rounded border border-black/20 px-3 py-2 dark:border-white/20">
+        <div className="min-h-64 flex-1 overflow-y-auto rounded border border-border px-3 py-2">
           {content.trim().length > 0 ? (
             <PostBody content={content} format={format} previews={previews} />
           ) : (
@@ -492,7 +492,7 @@ export default function PostForm(props: PostFormProps) {
           type="button"
           onClick={() => savePost("DRAFT")}
           disabled={submitting || savingDraft}
-          className="rounded border border-black/20 px-4 py-2 disabled:opacity-50 dark:border-white/20"
+          className="rounded border border-border px-4 py-2 disabled:opacity-50"
         >
           임시저장
         </button>

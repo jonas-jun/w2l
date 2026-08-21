@@ -66,7 +66,7 @@ export default async function Home(props: PageProps<"/">) {
         {hasMore && (
           <Link
             href={`/?limit=${limit + PAGE_SIZE}`}
-            className="mt-4 block rounded border border-black/20 py-2 text-center text-sm dark:border-white/20"
+            className="mt-4 block rounded border border-border py-2 text-center text-sm"
           >
             더 보기
           </Link>

@@ -85,7 +85,7 @@ export default function ImageUploadButton({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="rounded border border-black/20 px-2 py-1 text-xs disabled:opacity-50 dark:border-white/20"
+        className="rounded border border-border px-2 py-1 text-xs disabled:opacity-50"
         aria-label="이미지"
       >
         {uploading ? "업로드 중..." : "이미지"}
